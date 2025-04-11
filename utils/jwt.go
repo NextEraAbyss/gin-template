@@ -22,17 +22,19 @@ func InitJWTConfig(cfg *config.Config) {
 
 // Claims 自定义JWT声明
 type Claims struct {
-	UserID uint `json:"user_id"`
+	UserID   uint   `json:"user_id"`
+	Username string `json:"username"`
 	jwt.StandardClaims
 }
 
 // GenerateToken 生成JWT令牌
-func GenerateToken(userID uint) (string, error) {
+func GenerateToken(userID uint, username string) (string, error) {
 	nowTime := time.Now()
 	expireTime := nowTime.Add(jwtExpiration)
 
 	claims := Claims{
-		UserID: userID,
+		UserID:   userID,
+		Username: username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
 			IssuedAt:  nowTime.Unix(),

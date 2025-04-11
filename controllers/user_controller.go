@@ -9,167 +9,176 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UserController 接口定义了用户相关的处理器
-type UserController interface {
-	Create(c *gin.Context)
-	GetByID(c *gin.Context)
-	GetAll(c *gin.Context)
-	Update(c *gin.Context)
-	Delete(c *gin.Context)
-	Login(c *gin.Context)
-}
-
-// userController 实现 UserController 接口
-type userController struct {
+// UserController 用户控制器
+type UserController struct {
 	userService services.UserService
 }
 
-// NewUserController 创建一个新的 UserController 实例
-func NewUserController(userService services.UserService) UserController {
-	return &userController{userService: userService}
+// NewUserController 创建用户控制器
+func NewUserController(userService services.UserService) *UserController {
+	return &UserController{
+		userService: userService,
+	}
 }
 
-// Create 创建一个新用户
-func (ctrl *userController) Create(c *gin.Context) {
-	var dto models.UserCreateDTO
-
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		utils.InvalidParams(c, "无效的请求参数："+err.Error())
+// Create 创建用户
+func (ctrl *UserController) Create(c *gin.Context) {
+	var user models.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
 		return
 	}
 
-	// 转换DTO为User模型
-	user := dto.ToUser()
-
-	if err := ctrl.userService.CreateUser(&user); err != nil {
-		utils.Failure(c, err)
+	if err := ctrl.userService.Create(c.Request.Context(), &user); err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	utils.Success(c, user)
+	utils.ResponseSuccess(c, user.ToResponse())
 }
 
-// GetByID 根据ID获取用户
-func (ctrl *userController) GetByID(c *gin.Context) {
+// List 获取用户列表
+func (ctrl *UserController) List(c *gin.Context) {
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	if err != nil || pageSize < 1 {
+		pageSize = 10
+	}
+
+	result, err := ctrl.userService.List(c.Request.Context(), page, pageSize)
+	if err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, result)
+}
+
+// Get 获取用户详情
+func (ctrl *UserController) Get(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		utils.InvalidParams(c, "无效的用户ID")
+		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
-	user, err := ctrl.userService.GetUserByID(uint(id))
+	user, err := ctrl.userService.GetByID(c.Request.Context(), uint(id))
 	if err != nil {
-		utils.NotFound(c, "用户不存在")
+		utils.ResponseError(c, utils.CodeUserNotFound, "用户不存在")
 		return
 	}
 
-	utils.Success(c, user)
-}
-
-// GetAll 获取所有用户
-func (ctrl *userController) GetAll(c *gin.Context) {
-	// 绑定查询参数
-	var query models.UserQueryDTO
-	if err := c.ShouldBindQuery(&query); err != nil {
-		utils.InvalidParams(c, "无效的查询参数："+err.Error())
-		return
-	}
-
-	// 设置默认值
-	if query.Page == 0 {
-		query.Page = 1
-	}
-	if query.PageSize == 0 {
-		query.PageSize = 10
-	}
-
-	users, err := ctrl.userService.GetAllUsers()
-	if err != nil {
-		utils.Failure(c, err)
-		return
-	}
-
-	if len(users) == 0 {
-		utils.NoContent(c)
-		return
-	}
-
-	utils.Success(c, users)
+	utils.ResponseSuccess(c, user.ToResponse())
 }
 
 // Update 更新用户信息
-func (ctrl *userController) Update(c *gin.Context) {
+func (ctrl *UserController) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		utils.InvalidParams(c, "无效的用户ID")
+		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
-	// 获取现有用户
-	user, err := ctrl.userService.GetUserByID(uint(id))
-	if err != nil {
-		utils.NotFound(c, "用户不存在")
+	var user models.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
 		return
 	}
 
-	// 绑定更新DTO
-	var dto models.UserUpdateDTO
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		utils.InvalidParams(c, "无效的请求参数："+err.Error())
+	user.ID = uint(id)
+	if err := ctrl.userService.Update(c.Request.Context(), &user); err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	// 更新用户模型
-	dto.UpdateUser(user)
-
-	if err := ctrl.userService.UpdateUser(user); err != nil {
-		utils.Failure(c, err)
-		return
-	}
-
-	utils.SuccessWithMessage(c, "用户信息更新成功", user)
+	utils.ResponseSuccess(c, user.ToResponse())
 }
 
 // Delete 删除用户
-func (ctrl *userController) Delete(c *gin.Context) {
+func (ctrl *UserController) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		utils.InvalidParams(c, "无效的用户ID")
+		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
-	if err := ctrl.userService.DeleteUser(uint(id)); err != nil {
-		utils.Failure(c, err)
+	if err := ctrl.userService.Delete(c.Request.Context(), uint(id)); err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	utils.SuccessWithMessage(c, "用户删除成功", nil)
+	utils.ResponseSuccess(c, nil)
 }
 
 // Login 用户登录
-func (ctrl *userController) Login(c *gin.Context) {
-	var dto models.LoginDTO
+func (ctrl *UserController) Login(c *gin.Context) {
+	var loginForm struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
 
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		utils.InvalidParams(c, "无效的登录信息："+err.Error())
+	if err := c.ShouldBindJSON(&loginForm); err != nil {
+		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
 		return
 	}
 
-	user, err := ctrl.userService.Authenticate(dto.Username, dto.Password)
+	token, err := ctrl.userService.Login(c.Request.Context(), loginForm.Username, loginForm.Password)
 	if err != nil {
-		utils.Unauthorized(c, "用户名或密码错误")
+		utils.ResponseError(c, utils.CodeUnauthorized, "用户名或密码错误")
 		return
 	}
 
-	// 生成JWT令牌
-	token, err := utils.GenerateToken(user.ID)
-	if err != nil {
-		utils.Failure(c, err)
-		return
-	}
-
-	utils.Success(c, gin.H{
-		"user":  user,
+	utils.ResponseSuccess(c, gin.H{
 		"token": token,
 	})
+}
+
+// ChangePassword 修改密码
+func (ctrl *UserController) ChangePassword(c *gin.Context) {
+	var req struct {
+		OldPassword string `json:"old_password" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
+		return
+	}
+
+	// 从上下文中获取用户ID
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.ResponseError(c, utils.CodeUnauthorized, "未登录")
+		return
+	}
+
+	if err := ctrl.userService.ChangePassword(c.Request.Context(), userID.(uint), req.OldPassword, req.NewPassword); err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, nil)
+}
+
+// ResetPassword 重置密码
+func (ctrl *UserController) ResetPassword(c *gin.Context) {
+	var req struct {
+		Email string `json:"email" binding:"required,email"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
+		return
+	}
+
+	if err := ctrl.userService.ResetPassword(c.Request.Context(), req.Email); err != nil {
+		utils.ResponseError(c, utils.CodeInternalError, err.Error())
+		return
+	}
+
+	utils.ResponseSuccess(c, nil)
 }

@@ -1,42 +1,105 @@
 package routes
 
 import (
-	"gitee.com/NextEraAbyss/gin-template/controllers"
-	"gitee.com/NextEraAbyss/gin-template/middlewares"
-	"gitee.com/NextEraAbyss/gin-template/repositories"
-	"gitee.com/NextEraAbyss/gin-template/services"
+	"time"
+
+	"gitee.com/NextEraAbyss/gin-template/internal/container"
+	"gitee.com/NextEraAbyss/gin-template/middleware"
+	"gitee.com/NextEraAbyss/gin-template/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
 // SetupRoutes 配置所有路由
+// 该函数负责设置应用的所有路由，包括API路由和中间件
+// 参数:
+//   - router: Gin引擎实例
+//   - db: 数据库连接
+//   - redisClient: Redis客户端
 func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
-	// 创建依赖关系
-	userRepo := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepo, redisClient)
-	userController := controllers.NewUserController(userService)
+	// 自动迁移数据库表结构
+	// 根据模型定义自动创建或更新数据库表
+	err := db.AutoMigrate(
+		&models.User{},    // 用户表
+		&models.Article{}, // 文章表
+		// 在这里添加其他需要迁移的模型
+	)
+	if err != nil {
+		panic("数据库迁移失败: " + err.Error())
+	}
 
-	// 公共路由
-	router.POST("/login", userController.Login)
+	// 创建依赖注入容器
+	container := container.NewContainer(db, redisClient)
+	container.InitRepositories()
+	container.InitServices()
+	container.InitControllers()
+
+	// 全局中间件
+	router.Use(middleware.RequestID())      // 请求ID中间件
+	router.Use(middleware.Logger())         // 日志中间件
+	router.Use(middleware.Recovery())       // 恢复中间件
+	router.Use(middleware.ErrorHandler())   // 错误处理中间件
+	router.Use(middleware.CorsMiddleware()) // CORS中间件
+	router.Use(middleware.Security())
+	router.Use(middleware.RateLimit(100, time.Minute)) // 限制每分钟100个请求
 
 	// API路由组
+	// 所有API路由都以/api为前缀
 	api := router.Group("/api")
 	{
-		// 用户路由
+		// 用户认证相关路由
+		auth := api.Group("/auth")
+		{
+			auth.POST("/login", container.GetUserController().Login)
+			auth.POST("/register", container.GetAuthController().Register)
+		}
+
+		// 用户相关路由
 		users := api.Group("/users")
 		{
-			users.POST("", userController.Create)
-			users.GET("", userController.GetAll)
-			users.GET("/:id", userController.GetByID)
+			// 公开接口 - 不需要认证
+			users.POST("", container.GetUserController().Create) // 创建用户
+			users.GET("", container.GetUserController().List)    // 获取所有用户
+			users.GET("/:id", container.GetUserController().Get) // 根据ID获取用户
 
-			// 需要认证的路由
+			// 需要认证的路由组
+			// 使用AuthMiddleware中间件进行JWT认证
 			authUsers := users.Group("")
-			authUsers.Use(middlewares.AuthMiddleware())
+			authUsers.Use(middleware.AuthMiddleware())
 			{
-				authUsers.PUT("/:id", userController.Update)
-				authUsers.DELETE("/:id", userController.Delete)
+				authUsers.PUT("/:id", container.GetUserController().Update)    // 更新用户信息
+				authUsers.DELETE("/:id", container.GetUserController().Delete) // 删除用户
+			}
+
+			users.POST("/:id/change-password", container.GetUserController().ChangePassword)
+			users.POST("/reset-password", container.GetUserController().ResetPassword)
+		}
+
+		// 文章相关路由
+		articles := api.Group("/articles")
+		{
+			// 公开接口 - 不需要认证
+			articles.GET("", container.GetArticleController().List)    // 获取文章列表
+			articles.GET("/:id", container.GetArticleController().Get) // 获取单个文章
+
+			// 需要认证的接口
+			// 使用AuthMiddleware中间件进行JWT认证
+			authArticles := articles.Group("")
+			authArticles.Use(middleware.AuthMiddleware())
+			{
+				authArticles.POST("", container.GetArticleController().Create)       // 创建文章
+				authArticles.PUT("/:id", container.GetArticleController().Update)    // 更新文章
+				authArticles.DELETE("/:id", container.GetArticleController().Delete) // 删除文章
 			}
 		}
 	}
+}
+
+// RegisterRoutes 注册所有路由
+// 该函数用于注册不需要数据库连接的路由
+// 参数:
+//   - router: Gin引擎实例
+func RegisterRoutes(router *gin.Engine) {
+	// 这个函数可以保留为空，或者用于其他不需要数据库连接的路由注册
 }

@@ -3,37 +3,123 @@ package utils
 import (
 	"net/http"
 
+	"gitee.com/NextEraAbyss/gin-template/internal/errors"
 	"github.com/gin-gonic/gin"
 )
 
-// Response 标准API响应结构
+// Response 统一响应结构
 type Response struct {
-	Code    int         `json:"code"`            // 业务码
-	Message string      `json:"message"`         // 提示信息
-	Data    interface{} `json:"data"`            // 数据
-	Error   string      `json:"error,omitempty"` // 错误信息，只在开发环境显示
+	Code    int         `json:"code"`    // 错误码
+	Message string      `json:"message"` // 错误信息
+	Data    interface{} `json:"data"`    // 数据
 }
 
-// ResponseCode 业务码枚举
+// ResponseSuccess 成功响应
+func ResponseSuccess(c *gin.Context, data interface{}) {
+	c.JSON(http.StatusOK, Response{
+		Code:    int(errors.CodeSuccess),
+		Message: "success",
+		Data:    data,
+	})
+}
+
+// ResponseError 错误响应
+func ResponseError(c *gin.Context, code errors.ErrorCode, message string) {
+	// 获取HTTP状态码
+	httpCode := errors.GetHTTPCode(code)
+
+	c.JSON(httpCode, Response{
+		Code:    int(code),
+		Message: message,
+		Data:    nil,
+	})
+}
+
+// ResponseErrorWithDetails 带详细信息的错误响应
+func ResponseErrorWithDetails(c *gin.Context, code errors.ErrorCode, message string, details string) {
+	// 获取HTTP状态码
+	httpCode := errors.GetHTTPCode(code)
+
+	c.JSON(httpCode, Response{
+		Code:    int(code),
+		Message: message,
+		Data: gin.H{
+			"details": details,
+		},
+	})
+}
+
+// 系统级状态码
 const (
-	CodeSuccess       = 20000 // 成功
-	CodeUnauthorized  = 40100 // 未授权
-	CodeForbidden     = 40300 // 禁止访问
-	CodeNotFound      = 40400 // 资源不存在
-	CodeInvalidParams = 40001 // 请求参数错误
-	CodeFailure       = 50000 // 系统内部错误
-	CodeNoContent     = 20400 // 无内容
+	CodeSuccess       = 0    // 成功
+	CodeInvalidParams = 1001 // 无效的参数
+	CodeUnauthorized  = 1002 // 未授权
+	CodeForbidden     = 1003 // 禁止访问
+	CodeNotFound      = 1004 // 资源不存在
+	CodeInternalError = 1005 // 内部错误
+	CodeServerError   = 1005 // 服务器错误
+
+	// 用户相关错误 (2000-2999)
+	CodeUserNotFound  = 2001 // 用户不存在
+	CodeUserExists    = 2002 // 用户已存在
+	CodePasswordError = 2003 // 密码错误
+	CodeTokenExpired  = 2004 // Token过期
+	CodeTokenInvalid  = 2005 // Token无效
+	CodeUserDisabled  = 2006 // 用户已禁用
+
+	// 文章相关错误 (3000-3999)
+	CodeArticleNotFound  = 3001 // 文章不存在
+	CodeArticleExists    = 3002 // 文章已存在
+	CodeArticleForbidden = 3003 // 无权操作文章
+
+	// 评论相关错误 (4000-4999)
+	CodeCommentNotFound  = 4001 // 评论不存在
+	CodeCommentForbidden = 4002 // 无权操作评论
 )
 
-// CodeMessages 业务码对应消息
+// CodeMessages 状态码对应的消息
 var CodeMessages = map[int]string{
 	CodeSuccess:       "操作成功",
 	CodeUnauthorized:  "未授权",
 	CodeForbidden:     "禁止访问",
 	CodeNotFound:      "资源不存在",
 	CodeInvalidParams: "请求参数错误",
-	CodeFailure:       "系统内部错误",
-	CodeNoContent:     "无内容",
+	CodeServerError:   "服务器内部错误",
+
+	// 用户相关错误消息
+	CodeUserNotFound:  "用户不存在",
+	CodeUserExists:    "用户已存在",
+	CodePasswordError: "密码错误",
+	CodeTokenExpired:  "Token已过期",
+	CodeTokenInvalid:  "Token无效",
+	CodeUserDisabled:  "用户已禁用",
+
+	// 文章相关错误消息
+	CodeArticleNotFound:  "文章不存在",
+	CodeArticleExists:    "文章已存在",
+	CodeArticleForbidden: "无权操作文章",
+
+	// 评论相关错误消息
+	CodeCommentNotFound:  "评论不存在",
+	CodeCommentForbidden: "无权操作评论",
+}
+
+// ResponseErrorWithData 带数据的错误响应
+func ResponseErrorWithData(c *gin.Context, code int, message string, data interface{}) {
+	c.JSON(http.StatusOK, Response{
+		Code:    code,
+		Message: message,
+		Data:    data,
+	})
+}
+
+// ResponseErrorWithStatus 带HTTP状态码的错误响应
+func ResponseErrorWithStatus(c *gin.Context, httpStatus, code int, message string) {
+	c.JSON(httpStatus, Response{
+		Code:    code,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // Success 返回成功响应
@@ -57,8 +143,8 @@ func SuccessWithMessage(c *gin.Context, message string, data interface{}) {
 // NoContent 返回无内容响应
 func NoContent(c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
-		Code:    CodeNoContent,
-		Message: CodeMessages[CodeNoContent],
+		Code:    CodeSuccess,
+		Message: CodeMessages[CodeSuccess],
 		Data:    nil,
 	})
 }
@@ -120,25 +206,22 @@ func Failure(c *gin.Context, err error) {
 	Error("System error: %v", err)
 
 	c.JSON(http.StatusInternalServerError, Response{
-		Code:    CodeFailure,
-		Message: CodeMessages[CodeFailure],
+		Code:    CodeServerError,
+		Message: CodeMessages[CodeServerError],
 		Data:    nil,
-		Error:   err.Error(),
 	})
 }
 
 // CustomError 返回自定义错误响应
 func CustomError(c *gin.Context, httpStatus, code int, message string, err error) {
-	errMsg := ""
 	if err != nil {
 		Error("Custom error: %v", err)
-		errMsg = err.Error()
+		message = err.Error()
 	}
 
 	c.JSON(httpStatus, Response{
 		Code:    code,
 		Message: message,
 		Data:    nil,
-		Error:   errMsg,
 	})
 }

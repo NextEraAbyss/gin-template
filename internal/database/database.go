@@ -103,19 +103,16 @@ func createDefaultUsers(db *gorm.DB) {
 				Username: "admin",
 				Email:    "admin@example.com",
 				Password: "Admin123!", // 将在保存前加密
-				FullName: "管理员",
 			},
 			{
 				Username: "user1",
 				Email:    "user1@example.com",
 				Password: "Password123!",
-				FullName: "测试用户1",
 			},
 			{
 				Username: "user2",
 				Email:    "user2@example.com",
 				Password: "Password123!",
-				FullName: "测试用户2",
 			},
 		}
 

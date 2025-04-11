@@ -33,9 +33,15 @@ var (
 	// 是否显示调用信息
 	showCaller = true
 	// 日志记录器
-	infoLogger  = log.New(os.Stdout, "", log.LstdFlags)
-	errorLogger = log.New(os.Stderr, "", log.LstdFlags)
+	infoLogger  *log.Logger
+	errorLogger *log.Logger
 )
+
+func init() {
+	// 初始化日志记录器
+	infoLogger = log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime|log.Lshortfile)
+	errorLogger = log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
+}
 
 // InitLogger 初始化日志系统
 func InitLogger(level int, out io.Writer, errOut io.Writer, showCallerInfo bool) {
@@ -133,4 +139,52 @@ func InitLogFile(logDir string) {
 
 	// 初始化日志系统
 	InitLogger(logLevel, multiOut, multiErrOut, showCaller)
+}
+
+// LogInfo 记录信息日志
+// 参数:
+//   - msg: 日志消息
+//   - fields: 键值对形式的字段
+func LogInfo(msg string, fields ...interface{}) {
+	if len(fields)%2 != 0 {
+		errorLogger.Printf("Invalid number of fields for LogInfo: %d", len(fields))
+		return
+	}
+
+	// 构建日志消息
+	logMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
+	for i := 0; i < len(fields); i += 2 {
+		key, ok := fields[i].(string)
+		if !ok {
+			errorLogger.Printf("Invalid key type in LogInfo: %T", fields[i])
+			continue
+		}
+		logMsg += fmt.Sprintf(" %s=%v", key, fields[i+1])
+	}
+
+	infoLogger.Println(logMsg)
+}
+
+// LogError 记录错误日志
+// 参数:
+//   - msg: 日志消息
+//   - fields: 键值对形式的字段
+func LogError(msg string, fields ...interface{}) {
+	if len(fields)%2 != 0 {
+		errorLogger.Printf("Invalid number of fields for LogError: %d", len(fields))
+		return
+	}
+
+	// 构建日志消息
+	logMsg := fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05"), msg)
+	for i := 0; i < len(fields); i += 2 {
+		key, ok := fields[i].(string)
+		if !ok {
+			errorLogger.Printf("Invalid key type in LogError: %T", fields[i])
+			continue
+		}
+		logMsg += fmt.Sprintf(" %s=%v", key, fields[i+1])
+	}
+
+	errorLogger.Println(logMsg)
 }

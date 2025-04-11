@@ -9,19 +9,25 @@
   - JWT认证机制
   - 密码强度验证
   - 可配置的令牌过期时间
+  - 请求速率限制
+  - CORS安全配置
 - **性能优化**：
   - Redis缓存支持
   - 数据库连接池优化
   - 高效的查询处理
+  - 异步日志处理
 - **开发体验**：
   - 统一日志系统
   - 标准化API响应格式
   - 结构化错误处理
   - 请求数据验证
+  - 完整的开发工具链
 - **代码质量**：
   - 符合Go最佳实践
   - 代码注释完善
   - 模块化设计
+  - 静态代码分析
+  - 自动化测试支持
 
 ## 项目结构
 
@@ -29,7 +35,7 @@
 .
 ├── config/         # 配置相关代码
 ├── controllers/    # 控制器/处理器 (表示层)
-├── middlewares/    # 中间件
+├── middleware/     # 中间件
 ├── models/         # 数据模型和DTO
 ├── repositories/   # 数据访问层
 ├── routes/         # 路由设置
@@ -59,7 +65,7 @@
 
 1. 克隆项目
 ```bash
-git clone https://github.com/your-username/gin-template.git
+git clone https://github.com/NextEraAbyss/gin-template.git
 cd gin-template
 ```
 
@@ -70,43 +76,49 @@ go mod tidy
 
 3. 配置环境变量
 ```bash
+# 复制环境变量模板
 cp .env.example .env
+
 # 编辑.env文件，设置你的环境变量
 ```
 
 4. 运行项目
 ```bash
+# 开发模式运行
+make run
+
+# 或者直接运行
 go run main.go
 ```
 
-### 环境变量配置说明
+### 开发命令
 
-项目使用`.env`文件或环境变量进行配置，主要配置项包括：
+项目提供了 Makefile 来简化开发流程：
 
-```
-# 应用环境设置
-ENV=development # 可选: development, production
+```bash
+# 安装依赖
+make deps
 
-# 服务器设置
-SERVER_HOST=localhost
-SERVER_PORT=8080
+# 运行代码检查
+make lint
 
-# 数据库设置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your-password
-DB_NAME=gin_template
+# 运行测试
+make test
 
-# Redis设置
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_DB=0
+# 构建应用
+make build
 
-# JWT设置
-JWT_SECRET=your-secure-jwt-secret-key-change-in-production
-JWT_EXPIRATION_HOURS=24
+# 运行应用
+make run
+
+# 清理构建文件
+make clean
+
+# 生成API文档
+make docs
+
+# 运行数据库迁移
+make migrate
 ```
 
 ## API 文档
@@ -124,7 +136,7 @@ JWT_EXPIRATION_HOURS=24
 }
 ```
 
-### 业务状态码说明
+### 业务状态码
 
 | 状态码 | 描述 |
 |-------|------|
@@ -151,28 +163,9 @@ POST /login
 }
 ```
 
-响应:
-```json
-{
-  "code": 20000,
-  "message": "操作成功",
-  "data": {
-    "user": {
-      "id": 1,
-      "username": "admin",
-      "email": "admin@example.com",
-      "full_name": "管理员",
-      "created_at": "2023-01-01T12:00:00Z",
-      "updated_at": "2023-01-01T12:00:00Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
 ### 用户相关
 
-**获取所有用户**
+**获取用户列表**
 ```
 GET /api/users
 ```
@@ -184,43 +177,9 @@ GET /api/users
 - `order`: 排序方向(asc或desc)
 - `search`: 搜索关键词
 
-响应:
-```json
-{
-  "code": 20000,
-  "message": "操作成功",
-  "data": [
-    {
-      "id": 1,
-      "username": "admin",
-      "email": "admin@example.com",
-      "full_name": "管理员",
-      "created_at": "2023-01-01T12:00:00Z",
-      "updated_at": "2023-01-01T12:00:00Z"
-    }
-  ]
-}
-```
-
 **获取单个用户**
 ```
 GET /api/users/:id
-```
-
-响应:
-```json
-{
-  "code": 20000,
-  "message": "操作成功",
-  "data": {
-    "id": 1,
-    "username": "admin",
-    "email": "admin@example.com",
-    "full_name": "管理员",
-    "created_at": "2023-01-01T12:00:00Z",
-    "updated_at": "2023-01-01T12:00:00Z"
-  }
-}
 ```
 
 **创建用户**
@@ -238,56 +197,9 @@ POST /api/users
 }
 ```
 
-注意：密码必须符合强度要求（至少8个字符，包含大小写字母、数字和特殊字符）
-
-响应:
-```json
-{
-  "code": 20000,
-  "message": "操作成功",
-  "data": {
-    "id": 2,
-    "username": "new-user",
-    "email": "user@example.com",
-    "full_name": "New User",
-    "created_at": "2023-01-02T12:00:00Z",
-    "updated_at": "2023-01-02T12:00:00Z"
-  }
-}
-```
-
 **更新用户** (需要认证)
 ```
 PUT /api/users/:id
-```
-
-请求头:
-```
-Authorization: Bearer your-jwt-token
-```
-
-请求体:
-```json
-{
-  "email": "updated-email@example.com",
-  "full_name": "Updated Name"
-}
-```
-
-响应:
-```json
-{
-  "code": 20000,
-  "message": "用户信息更新成功",
-  "data": {
-    "id": 2,
-    "username": "new-user",
-    "email": "updated-email@example.com",
-    "full_name": "Updated Name",
-    "created_at": "2023-01-02T12:00:00Z",
-    "updated_at": "2023-01-02T12:10:00Z"
-  }
-}
 ```
 
 **删除用户** (需要认证)
@@ -295,18 +207,48 @@ Authorization: Bearer your-jwt-token
 DELETE /api/users/:id
 ```
 
-请求头:
+### 文章相关
+
+**获取文章列表**
 ```
-Authorization: Bearer your-jwt-token
+GET /api/articles
 ```
 
-响应:
+查询参数:
+- `page`: 页码，默认1
+- `page_size`: 每页条数，默认10
+- `keyword`: 搜索关键词
+- `status`: 文章状态(1:草稿,2:已发布)
+- `order_by`: 排序字段(created_at,view_count)
+- `order`: 排序方向(asc,desc)
+
+**获取单个文章**
+```
+GET /api/articles/:id
+```
+
+**创建文章** (需要认证)
+```
+POST /api/articles
+```
+
+请求体:
 ```json
 {
-  "code": 20000,
-  "message": "用户删除成功",
-  "data": null
+  "title": "新文章标题",
+  "content": "新文章内容",
+  "status": 1
 }
+```
+
+**更新文章** (需要认证)
+```
+PUT /api/articles/:id
+```
+
+**删除文章** (需要认证)
+```
+DELETE /api/articles/:id
 ```
 
 ## 日志系统
@@ -328,81 +270,58 @@ Authorization: Bearer your-jwt-token
 - 自动缓存失效处理
 - 缓存命中率监控
 
-## 打包和部署
+## 部署指南
 
-### 在Windows上打包Linux版本
+### 开发环境部署
 
+1. 安装依赖
 ```bash
-# 方法1: 直接使用环境变量（PowerShell）
-$env:GOOS="linux"
-$env:GOARCH="amd64"
-go build -o app-linux-amd64 main.go
-
-# 方法2: 直接使用环境变量（CMD）
-set GOOS=linux
-set GOARCH=amd64
-go build -o app-linux-amd64 main.go
-
-# 方法3: 使用go env命令（推荐）
-go env -w GOOS=linux
-go env -w GOARCH=amd64
-go build -o app-linux-amd64 main.go
-
-# 完成后恢复为Windows环境（如果使用了方法3）
-go env -w GOOS=windows
-go env -w GOARCH=amd64
-
-# 优化: 减小二进制文件大小
-# 在上述任何一种方法中添加-ldflags参数
-go build -ldflags="-s -w" -o app-linux-amd64 main.go
+make deps
 ```
 
+2. 配置环境变量
+```bash
+cp .env.example .env
+# 编辑 .env 文件
+```
+
+3. 运行项目
+```bash
+make run
+```
 
 ### 生产环境部署
 
-#### 系统服务部署 (Linux)
+#### Docker部署
 
-1. 创建系统服务文件（/etc/systemd/system/gin-api.service）
-
-```
-[Unit]
-Description=Gin API Template
-After=network.target
-
-[Service]
-User=www-data
-WorkingDirectory=/opt/gin-api
-ExecStart=/opt/gin-api/app
-Restart=on-failure
-RestartSec=5s
-Environment=ENV=production
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2. 启用和管理服务
-
+1. 构建镜像
 ```bash
-# 复制二进制文件和配置到部署目录
-sudo mkdir -p /opt/gin-api
-sudo cp app .env /opt/gin-api/
-sudo chown -R www-data:www-data /opt/gin-api
-
-# 启用服务
-sudo systemctl enable gin-api
-
-# 启动服务
-sudo systemctl start gin-api
-
-# 检查状态
-sudo systemctl status gin-api
-
-# 查看日志
-sudo journalctl -u gin-api -f
+docker build -t gin-api .
 ```
 
-#### Nginx反向代理配置
+2. 运行容器
+```bash
+docker run -d -p 8080:8080 --name gin-api gin-api
+```
+
+#### 传统部署
+
+1. 构建应用
+```bash
+make build
+```
+
+2. 使用PM2运行（推荐）
+```bash
+pm2 start ecosystem.config.js
+```
+
+3. 使用nohup运行
+```bash
+./start.sh
+```
+
+### Nginx配置
 
 ```nginx
 server {
@@ -419,21 +338,55 @@ server {
 }
 ```
 
-### 云平台部署
+## 开发规范
 
-本项目也可以部署在各种云平台上：
+### 代码风格
 
-- **AWS Elastic Beanstalk**
-- **Google Cloud Run**
-- **Azure App Service**
-- **Heroku**
+- 使用 `golangci-lint` 进行代码检查
+- 遵循 Go 官方代码规范
+- 使用 `go fmt` 格式化代码
+- 保持一致的命名风格
 
-每个平台都有特定的部署流程，通常需要创建一个配置文件（如Procfile、app.yaml等）。详细部署步骤请参考相应云平台的官方文档。
+### Git提交规范
 
-## 贡献
+提交信息格式：
+```
+<type>(<scope>): <subject>
 
-欢迎贡献代码、提交问题和功能请求。请确保代码符合Go的最佳实践和项目的代码风格。
+<body>
+
+<footer>
+```
+
+类型（type）：
+- feat: 新功能
+- fix: 修复bug
+- docs: 文档更新
+- style: 代码格式调整
+- refactor: 重构
+- test: 测试相关
+- chore: 构建过程或辅助工具的变动
+
+### 测试规范
+
+- 单元测试覆盖率要求 > 80%
+- 集成测试覆盖主要业务流程
+- 使用 `go test -cover` 检查测试覆盖率
+
+## 贡献指南
+
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
 
 ## 许可证
 
 MIT License
+
+## 联系方式
+
+- 项目维护者：[秦若宸/NextEraAbyss]
+- 邮箱：[1578347363@qq.com]
+- 项目链接：[https://github.com/NextEraAbyss/gin-template](https://github.com/NextEraAbyss/gin-template)

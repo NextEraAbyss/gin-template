@@ -1,0 +1,130 @@
+linters:
+  enable:
+    - gofmt
+    - golint
+    - govet
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - misspell
+    - gocyclo
+    - gosec
+    - goimports
+    - revive
+    - whitespace
+    - goconst
+    - gocritic
+    - godot
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - nakedret
+    - prealloc
+    - scopelint
+    - stylecheck
+    - unconvert
+    - unparam
+    - varcheck
+    - wsl
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+  godot:
+    check-all: true
+  gomnd:
+    checks:
+      - argument
+      - assign
+      - case
+      - condition
+      - operation
+      - return
+    ignored-numbers:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "100"
+      - "1000"
+      - "200"
+      - "201"
+      - "400"
+      - "401"
+      - "403"
+      - "404"
+      - "500"
+  gosec:
+    excludes:
+      - G404 # Insecure random number source (math/rand)
+  stylecheck:
+    checks:
+      - all
+      - ST1000 # Incorrect or missing package comment
+      - ST1001 # Dot imports are discouraged
+      - ST1003 # Poorly chosen identifier
+      - ST1005 # Incorrectly formatted error string
+      - ST1006 # Poorly chosen receiver name
+      - ST1008 # A function's error value should be its last return value
+      - ST1016 # Use consistent type names
+      - ST1019 # Importing the same package multiple times
+      - ST1020 # The documentation of an exported function should start with the function's name
+      - ST1021 # The documentation of an exported type should start with the type's name
+      - ST1022 # The documentation of an exported variable or constant should start with the variable's name
+  wsl:
+    allow-assign-and-call: true
+    allow-trailing-comment: true
+    force-err-cuddling: true
+    force-short-decl-cuddling: true
+    force-case-trailing-whitespace: true
+
+run:
+  deadline: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+    - third_party
+  skip-files:
+    - ".*_test\\.go$"
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+    - path: internal/errors/errors.go
+      linters:
+        - gosec
+    - path: utils/logger.go
+      linters:
+        - gosec
+    - path: utils/jwt.go
+      linters:
+        - gosec
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  path-prefix: ""
+  sort-results: true 
