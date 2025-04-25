@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"gorm.io/gorm"
 )
@@ -8,14 +10,14 @@ import (
 // ArticleRepository 文章仓库接口
 // 定义了文章相关的数据库操作
 type ArticleRepository interface {
-	Create(article *models.Article) error                                // 创建文章
-	Update(article *models.Article) error                                // 更新文章
-	Delete(id uint) error                                                // 删除文章
-	FindByID(id uint) (*models.Article, error)                           // 根据ID查找文章
-	List(query *models.ArticleQueryDTO) ([]models.Article, int64, error) // 获取文章列表
-	IncrementViewCount(id uint) error                                    // 增加文章浏览次数
-	IncrementLikeCount(id uint) error                                    // 增加文章点赞次数
-	IncrementCommentCount(id uint) error                                 // 增加文章评论次数
+	Create(article *models.Article) error                                 // 创建文章
+	Update(article *models.Article) error                                 // 更新文章
+	Delete(id uint) error                                                 // 删除文章
+	FindByID(id uint) (*models.Article, error)                            // 根据ID查找文章
+	List(query *models.ArticleQueryDTO) ([]*models.Article, int64, error) // 获取文章列表
+	IncrementViewCount(id uint) error                                     // 增加文章浏览次数
+	IncrementLikeCount(id uint) error                                     // 增加文章点赞次数
+	IncrementCommentCount(id uint) error                                  // 增加文章评论次数
 }
 
 // articleRepository 文章仓库实现
@@ -53,36 +55,49 @@ func (r *articleRepository) FindByID(id uint) (*models.Article, error) {
 	return &article, nil
 }
 
+// GetByID 根据ID获取文章.
+func (r *articleRepository) GetByID(ctx context.Context, id uint) (*models.Article, error) {
+	var article models.Article
+	var err error
+
+	err = r.db.Preload("Author").First(&article, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &article, nil
+}
+
 // List 获取文章列表
-func (r *articleRepository) List(query *models.ArticleQueryDTO) ([]models.Article, int64, error) {
-	var articles []models.Article
+func (r *articleRepository) List(query *models.ArticleQueryDTO) ([]*models.Article, int64, error) {
+	var articles []*models.Article
 	var total int64
 
 	db := r.db.Model(&models.Article{})
 
-	// 添加查询条件
-	if query.Keyword != "" {
-		db = db.Where("title LIKE ? OR content LIKE ?", "%"+query.Keyword+"%", "%"+query.Keyword+"%")
-	}
 	if query.AuthorID > 0 {
 		db = db.Where("author_id = ?", query.AuthorID)
 	}
+
 	if query.Status != nil {
 		db = db.Where("status = ?", *query.Status)
 	}
 
-	// 获取总数
-	if err := db.Count(&total).Error; err != nil {
+	if query.Keyword != "" {
+		db = db.Where("title LIKE ? OR content LIKE ?", "%"+query.Keyword+"%", "%"+query.Keyword+"%")
+	}
+
+	err := db.Count(&total).Error
+	if err != nil {
 		return nil, 0, err
 	}
 
-	// 获取分页数据
-	offset := (query.Page - 1) * query.PageSize
-	err := db.Preload("Author").
-		Offset(offset).
-		Limit(query.PageSize).
-		Order("created_at DESC").
-		Find(&articles).Error
+	if query.Page > 0 && query.PageSize > 0 {
+		offset := (query.Page - 1) * query.PageSize
+		db = db.Offset(offset).Limit(query.PageSize)
+	}
+
+	err = db.Preload("Author").Find(&articles).Error
 	if err != nil {
 		return nil, 0, err
 	}

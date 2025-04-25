@@ -36,16 +36,11 @@ func ResponseError(c *gin.Context, code errors.ErrorCode, message string) {
 }
 
 // ResponseErrorWithDetails 带详细信息的错误响应
-func ResponseErrorWithDetails(c *gin.Context, code errors.ErrorCode, message string, details string) {
-	// 获取HTTP状态码
-	httpCode := errors.GetHTTPCode(code)
-
-	c.JSON(httpCode, Response{
-		Code:    int(code),
-		Message: message,
-		Data: gin.H{
-			"details": details,
-		},
+func ResponseErrorWithDetails(c *gin.Context, code errors.ErrorCode, message, details string) {
+	c.JSON(http.StatusOK, gin.H{
+		"code":    code,
+		"message": message,
+		"details": details,
 	})
 }
 
@@ -149,42 +144,27 @@ func NoContent(c *gin.Context) {
 	})
 }
 
-// Unauthorized 返回未授权响应
-func Unauthorized(c *gin.Context, message ...string) {
-	msg := CodeMessages[CodeUnauthorized]
-	if len(message) > 0 {
-		msg = message[0]
-	}
+// ResponseUnauthorized 返回未授权响应
+func ResponseUnauthorized(c *gin.Context, message string) {
 	c.JSON(http.StatusUnauthorized, Response{
 		Code:    CodeUnauthorized,
-		Message: msg,
-		Data:    nil,
+		Message: message,
 	})
 }
 
-// Forbidden 返回禁止访问响应
-func Forbidden(c *gin.Context, message ...string) {
-	msg := CodeMessages[CodeForbidden]
-	if len(message) > 0 {
-		msg = message[0]
-	}
+// ResponseForbidden 返回禁止访问响应
+func ResponseForbidden(c *gin.Context, message string) {
 	c.JSON(http.StatusForbidden, Response{
 		Code:    CodeForbidden,
-		Message: msg,
-		Data:    nil,
+		Message: message,
 	})
 }
 
-// NotFound 返回资源不存在响应
-func NotFound(c *gin.Context, message ...string) {
-	msg := CodeMessages[CodeNotFound]
-	if len(message) > 0 {
-		msg = message[0]
-	}
+// ResponseNotFound 返回未找到响应
+func ResponseNotFound(c *gin.Context, message string) {
 	c.JSON(http.StatusNotFound, Response{
 		Code:    CodeNotFound,
-		Message: msg,
-		Data:    nil,
+		Message: message,
 	})
 }
 
@@ -194,6 +174,7 @@ func InvalidParams(c *gin.Context, message ...string) {
 	if len(message) > 0 {
 		msg = message[0]
 	}
+
 	c.JSON(http.StatusBadRequest, Response{
 		Code:    CodeInvalidParams,
 		Message: msg,
@@ -203,7 +184,7 @@ func InvalidParams(c *gin.Context, message ...string) {
 
 // Failure 返回系统错误响应
 func Failure(c *gin.Context, err error) {
-	Error("System error: %v", err)
+	Errorf("System error: %v", err)
 
 	c.JSON(http.StatusInternalServerError, Response{
 		Code:    CodeServerError,
@@ -215,7 +196,7 @@ func Failure(c *gin.Context, err error) {
 // CustomError 返回自定义错误响应
 func CustomError(c *gin.Context, httpStatus, code int, message string, err error) {
 	if err != nil {
-		Error("Custom error: %v", err)
+		Errorf("Custom error: %v", err)
 		message = err.Error()
 	}
 

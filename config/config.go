@@ -3,16 +3,17 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
-// Config 应用程序配置
+// Config 应用程序配置.
 type Config struct {
 	Env    string
 	Server struct {
 		Host string
-		Port string
+		Port int
 	}
 	Database struct {
 		Host     string
@@ -47,18 +48,19 @@ func LoadConfig() *Config {
 	config.Env = getEnv("ENV", "development")
 
 	// 服务器配置
-	config.Server.Host = getEnv("SERVER_HOST", "localhost")
-	config.Server.Port = getEnv("SERVER_PORT", "8080")
+	config.Server.Host = getEnv("SERVER_HOST", "0.0.0.0")
+	port, _ := strconv.Atoi(getEnv("SERVER_PORT", "9999"))
+	config.Server.Port = port
 
 	// 数据库配置
-	config.Database.Host = getEnv("DB_HOST", "localhost")
+	config.Database.Host = getEnv("DB_HOST", "10.0.0.2")
 	config.Database.Port = getEnv("DB_PORT", "5432")
 	config.Database.User = getEnv("DB_USER", "postgres")
 	config.Database.Password = getEnv("DB_PASSWORD", "postgres")
 	config.Database.Name = getEnv("DB_NAME", "gin_template")
 
 	// Redis配置
-	config.Redis.Host = getEnv("REDIS_HOST", "localhost")
+	config.Redis.Host = getEnv("REDIS_HOST", "10.0.0.2")
 	config.Redis.Port = getEnv("REDIS_PORT", "6379")
 	config.Redis.Password = getEnv("REDIS_PASSWORD", "")
 	config.Redis.DB = 0 // 默认使用DB 0

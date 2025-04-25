@@ -45,7 +45,7 @@ func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
 		// 获取当前请求数
 		count, err := redis.Client.Incr(context.Background(), key).Result()
 		if err != nil {
-			utils.Error("限流错误: %v", err)
+			utils.Errorf("限流错误: %v", err)
 			c.Next()
 			return
 		}

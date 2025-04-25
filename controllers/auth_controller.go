@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"gitee.com/NextEraAbyss/gin-template/internal/errors"
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/services"
 	"gitee.com/NextEraAbyss/gin-template/utils"
@@ -20,10 +21,20 @@ func NewAuthController(userService services.UserService) *AuthController {
 }
 
 // Register 用户注册
+// @Summary      用户注册
+// @Description  新用户注册接口
+// @Tags         认证管理
+// @Accept       json
+// @Produce      json
+// @Param        register  body      models.RegisterRequest  true  "注册信息"
+// @Success      200       {object}  utils.Response{data=models.UserResponse}
+// @Failure      400       {object}  utils.Response "参数错误"
+// @Failure      500       {object}  utils.Response "服务器内部错误"
+// @Router       /api/v1/auth/register [post]
 func (c *AuthController) Register(ctx *gin.Context) {
 	var req models.RegisterRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(ctx, utils.CodeInvalidParams, err.Error())
+		utils.ResponseError(ctx, errors.CodeInvalidParams, err.Error())
 		return
 	}
 
@@ -36,7 +47,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	}
 
 	if err := c.userService.Create(ctx, user); err != nil {
-		utils.ResponseError(ctx, utils.CodeInternalError, err.Error())
+		utils.ResponseError(ctx, errors.CodeRegisterFailed, err.Error())
 		return
 	}
 
@@ -44,20 +55,31 @@ func (c *AuthController) Register(ctx *gin.Context) {
 }
 
 // Login 用户登录
+// @Summary      用户登录
+// @Description  用户登录接口，返回JWT令牌
+// @Tags         认证管理
+// @Accept       json
+// @Produce      json
+// @Param        login  body      models.LoginRequest  true  "登录信息"
+// @Success      200    {object}  utils.Response{data=models.LoginResponse}
+// @Failure      400    {object}  utils.Response "参数错误"
+// @Failure      401    {object}  utils.Response "用户名或密码错误"
+// @Router       /api/v1/auth/login [post]
 func (c *AuthController) Login(ctx *gin.Context) {
 	var req models.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(ctx, utils.CodeInvalidParams, err.Error())
+		utils.ResponseError(ctx, errors.CodeInvalidParams, err.Error())
 		return
 	}
 
-	token, err := c.userService.Login(ctx, req.Username, req.Password)
+	token, user, err := c.userService.Login(ctx, req.Username, req.Password)
 	if err != nil {
-		utils.ResponseError(ctx, utils.CodeUnauthorized, err.Error())
+		utils.ResponseError(ctx, errors.CodeLoginFailed, err.Error())
 		return
 	}
 
-	utils.ResponseSuccess(ctx, gin.H{
-		"token": token,
+	utils.ResponseSuccess(ctx, models.LoginResponse{
+		Token: token,
+		User:  *user,
 	})
 }

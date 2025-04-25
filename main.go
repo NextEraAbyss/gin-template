@@ -1,68 +1,104 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"path/filepath"
-	"strconv"
-
-	"gitee.com/NextEraAbyss/gin-template/internal/database"
-	"gitee.com/NextEraAbyss/gin-template/internal/redis"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"gitee.com/NextEraAbyss/gin-template/config"
+	"gitee.com/NextEraAbyss/gin-template/internal/database"
 	"gitee.com/NextEraAbyss/gin-template/routes"
 	"gitee.com/NextEraAbyss/gin-template/utils"
+
+	_ "gitee.com/NextEraAbyss/gin-template/docs" // 导入生成的文档.
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	EnvProduction = "production"
+)
+
+// @title           Gin API Template
+// @version         1.0
+// @description     This is a sample server for a Gin API template.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:9999
+// @BasePath  /
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 func main() {
-	// 加载配置
-	appConfig := config.LoadConfig()
+	// 加载配置.
+	cfg := config.LoadConfig()
 
-	// 初始化日志系统
-	logDir := filepath.Join(".", "logs")
-	utils.InitLogFile(logDir)
-	if appConfig.Env == "production" {
-		utils.InitLogger(utils.INFO, nil, nil, false)
-	} else {
-		utils.InitLogger(utils.DEBUG, nil, nil, true)
-	}
+	// 初始化日志.
+	utils.InitLogger(utils.INFO, os.Stdout, os.Stderr, true)
 
-	utils.Info("Starting application in %s mode", appConfig.Env)
+	// 初始化数据库.
+	db := database.Init(cfg)
 
-	// 初始化JWT配置
-	utils.InitJWTConfig(appConfig)
-	utils.Debug("JWT configuration initialized")
+	// 初始化Redis.
+	redisClient := database.InitRedis(cfg)
 
-	// 设置gin模式
-	if appConfig.Env == "production" {
+	// 设置Gin模式.
+	if cfg.Env == EnvProduction {
 		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
 	}
 
-	// 初始化数据库
-	db := database.Init(appConfig)
-	utils.Info("Database initialized")
+	// 创建Gin引擎.
+	router := gin.Default()
 
-	// 初始化Redis
-	redisClient := redis.Init(appConfig)
-	utils.Info("Redis initialized")
-
-	// 初始化路由
-	router := gin.New()
-
-	// 注册路由
+	// 设置路由.
 	routes.SetupRoutes(router, db, redisClient)
-	utils.Info("Routes registered")
 
-	// 启动服务器
-	port, err := strconv.Atoi(appConfig.Server.Port)
-	if err != nil {
-		utils.Error("Invalid port number: %v", err)
-		return
+	// 创建HTTP服务器.
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", cfg.Server.Port),
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
-	utils.Info("Server is running on port %d", port)
-	if err := router.Run(fmt.Sprintf(":%d", port)); err != nil {
-		utils.Error("Server failed to start: %v", err)
+
+	// 在goroutine中启动服务器.
+	go func() {
+		utils.Infof("Server is running on port %d", cfg.Server.Port)
+
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			utils.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// 等待中断信号.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	utils.Infof("Shutting down server...")
+
+	// 设置关闭超时.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 优雅关闭服务器.
+	if err := srv.Shutdown(ctx); err != nil {
+		utils.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	utils.Infof("Server exiting")
 }

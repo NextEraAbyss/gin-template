@@ -13,6 +13,11 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+const (
+	// 环境常量
+	EnvProduction = "production"
+)
+
 var DB *gorm.DB
 
 // Init 初始化数据库连接
@@ -28,7 +33,7 @@ func Init(config *config.Config) *gorm.DB {
 
 	// 设置日志级别
 	var logLevel logger.LogLevel
-	if config.Env == "production" {
+	if config.Env == EnvProduction {
 		logLevel = logger.Error
 	} else {
 		logLevel = logger.Info
@@ -91,6 +96,7 @@ func Init(config *config.Config) *gorm.DB {
 // createDefaultUsers 创建默认用户（仅当数据库中没有用户时）
 func createDefaultUsers(db *gorm.DB) {
 	var count int64
+
 	db.Model(&models.User{}).Count(&count)
 
 	// 只有当数据库中没有用户时才创建默认用户
@@ -117,20 +123,21 @@ func createDefaultUsers(db *gorm.DB) {
 		}
 
 		// 加密密码并保存用户
-		for _, user := range defaultUsers {
+		for i := range defaultUsers {
 			// 密码加密
-			hashedPassword, err := utils.HashPassword(user.Password)
+			hashedPassword, err := utils.HashPassword(defaultUsers[i].Password)
 			if err != nil {
-				log.Printf("Failed to hash password for user %s: %v", user.Username, err)
+				log.Printf("Failed to hash password for user %s: %v", defaultUsers[i].Username, err)
 				continue
 			}
-			user.Password = hashedPassword
+
+			defaultUsers[i].Password = hashedPassword
 
 			// 保存用户
-			if err := db.Create(&user).Error; err != nil {
-				log.Printf("Failed to create default user %s: %v", user.Username, err)
+			if err := db.Create(&defaultUsers[i]).Error; err != nil {
+				log.Printf("Failed to create default user %s: %v", defaultUsers[i].Username, err)
 			} else {
-				log.Printf("Default user created: %s", user.Username)
+				log.Printf("Default user created: %s", defaultUsers[i].Username)
 			}
 		}
 	}

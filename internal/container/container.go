@@ -4,11 +4,11 @@ import (
 	"gitee.com/NextEraAbyss/gin-template/controllers"
 	"gitee.com/NextEraAbyss/gin-template/repositories"
 	"gitee.com/NextEraAbyss/gin-template/services"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
-// Container 依赖注入容器
+// Container 依赖注入容器.
 type Container struct {
 	db           *gorm.DB
 	redisClient  *redis.Client
@@ -17,13 +17,13 @@ type Container struct {
 	Controllers  *Controllers
 }
 
-// Repositories 仓储层依赖
+// Repositories 仓储层依赖.
 type Repositories struct {
 	User    repositories.UserRepository
 	Article repositories.ArticleRepository
 }
 
-// Services 服务层依赖
+// Services 服务层依赖.
 type Services struct {
 	User    services.UserService
 	Article services.ArticleService

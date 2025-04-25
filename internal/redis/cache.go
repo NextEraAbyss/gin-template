@@ -6,40 +6,44 @@ import (
 	"fmt"
 	"time"
 
-	redisClient "github.com/go-redis/redis/v8"
+	redisClient "github.com/redis/go-redis/v9"
 )
 
-// Cache 缓存接口
+// Cache 缓存接口.
 type Cache interface {
 	Get(ctx context.Context, key string, value interface{}) error
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Delete(ctx context.Context, key string) error
 	Exists(ctx context.Context, key string) (bool, error)
+	FlushDB(ctx context.Context) error
 }
 
-// RedisCache Redis缓存实现
+// RedisCache Redis缓存实现.
 type RedisCache struct {
 	client *redisClient.Client
 }
 
-// NewRedisCache 创建Redis缓存
+// NewRedisCache 创建Redis缓存.
 func NewRedisCache(client *redisClient.Client) *RedisCache {
 	return &RedisCache{
 		client: client,
 	}
 }
 
-// Get 获取缓存
+// Get 获取缓存.
 func (c *RedisCache) Get(ctx context.Context, key string, value interface{}) error {
-	data, err := c.client.Get(ctx, key).Result()
+	var data interface{}
+	var err error
+
+	data, err = c.client.Get(ctx, key).Result()
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal([]byte(data), value)
+	return json.Unmarshal([]byte(data.(string)), value)
 }
 
-// Set 设置缓存
+// Set 设置缓存.
 func (c *RedisCache) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -49,17 +53,28 @@ func (c *RedisCache) Set(ctx context.Context, key string, value interface{}, exp
 	return c.client.Set(ctx, key, data, expiration).Err()
 }
 
-// Delete 删除缓存
+// Delete 删除缓存.
 func (c *RedisCache) Delete(ctx context.Context, key string) error {
-	return c.client.Del(ctx, key).Err()
+	var err error
+
+	err = c.client.Del(ctx, key).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// Exists 检查缓存是否存在
+// Exists 检查缓存是否存在.
 func (c *RedisCache) Exists(ctx context.Context, key string) (bool, error) {
-	result, err := c.client.Exists(ctx, key).Result()
+	var result int64
+	var err error
+
+	result, err = c.client.Exists(ctx, key).Result()
 	if err != nil {
 		return false, err
 	}
+
 	return result > 0, nil
 }
 
@@ -114,4 +129,9 @@ func (c *RedisCache) SetNX(ctx context.Context, key string, value interface{}, e
 	}
 
 	return c.client.SetNX(ctx, key, data, expiration).Result()
+}
+
+// FlushDB 清空缓存.
+func (c *RedisCache) FlushDB(ctx context.Context) error {
+	return c.client.FlushDB(ctx).Err()
 }

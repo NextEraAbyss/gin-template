@@ -61,6 +61,32 @@
 - MySQL 5.7+
 - Redis 6.0+ (可选，但推荐使用)
 
+### Windows 环境配置
+
+1. 安装 Chocolatey (Windows 包管理器)
+```powershell
+# 以管理员身份运行 PowerShell，执行以下命令
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+
+2. 安装必要的工具
+```powershell
+# 安装 Make
+choco install make
+
+# 安装 UPX (用于压缩二进制文件)
+choco install upx
+```
+
+3. 验证安装
+```powershell
+# 检查 Make 版本
+make --version
+
+# 检查 UPX 版本
+upx --version
+```
+
 ### 安装
 
 1. 克隆项目
@@ -96,30 +122,79 @@ go run main.go
 项目提供了 Makefile 来简化开发流程：
 
 ```bash
-# 安装依赖
-make deps
-
-# 运行代码检查
-make lint
-
-# 运行测试
-make test
-
-# 构建应用
+# 构建应用（开发环境）
 make build
+
+# 构建应用（生产环境，包含优化）
+make build-prod
+
+# 构建并压缩二进制文件
+make build-compress
+
+# 比较二进制文件大小
+make size-compare
 
 # 运行应用
 make run
 
+# 运行测试
+make test
+
+# 运行测试并生成覆盖率报告（生成 coverage.html）
+make coverage
+
+# 运行基准测试
+make bench
+
+# 运行竞态检测
+make race
+
+# 运行代码检查
+make lint
+
+# 格式化代码
+make fmt
+
+# 检查依赖
+make check-deps
+
+# 运行安全检查
+make security-check
+
+# 安装依赖和工具
+make deps
+
+# 生成 API 文档
+make docs
+
 # 清理构建文件
 make clean
 
-# 生成API文档
-make docs
-
-# 运行数据库迁移
-make migrate
+# 显示帮助信息
+make help
 ```
+
+每个命令的具体功能：
+
+| 命令 | 说明 |
+|------|------|
+| `build` | 构建开发环境应用 |
+| `build-prod` | 构建生产环境应用（包含优化参数） |
+| `build-compress` | 构建并使用 UPX 压缩二进制文件 |
+| `size-compare` | 显示压缩前后的二进制文件大小比较 |
+| `run` | 运行应用 |
+| `test` | 运行单元测试 |
+| `coverage` | 运行测试并生成 HTML 格式的覆盖率报告 |
+| `bench` | 运行基准测试，测试代码性能 |
+| `race` | 运行竞态检测，发现并发问题 |
+| `lint` | 运行代码静态检查工具 |
+| `fmt` | 格式化代码，保持代码风格一致 |
+| `check-deps` | 检查并验证项目依赖 |
+| `security-check` | 运行安全检查，发现潜在安全问题 |
+| `deps` | 安装项目依赖和开发工具 |
+| `docs` | 生成 Swagger API 文档 |
+| `clean` | 清理构建产物和临时文件 |
+| `help` | 显示所有可用的 make 命令 |
 
 ## API 文档
 

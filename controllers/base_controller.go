@@ -5,6 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	// 排序方向常量
+	OrderAsc  = "asc"
+	OrderDesc = "desc"
+)
+
 // BaseController 定义基础控制器接口
 type BaseController[T any, D any] interface {
 	Create(c *gin.Context)
@@ -46,10 +52,10 @@ func GetPaginationParams(c *gin.Context) (page, pageSize int) {
 // GetSortParams 从请求中获取排序参数
 func GetSortParams(c *gin.Context) (sort, order string) {
 	sort = c.DefaultQuery("sort", "id")
-	order = c.DefaultQuery("order", "asc")
+	order = c.DefaultQuery("order", OrderAsc)
 
-	if order != "asc" && order != "desc" {
-		order = "asc"
+	if order != OrderAsc && order != OrderDesc {
+		order = OrderAsc
 	}
 
 	return sort, order

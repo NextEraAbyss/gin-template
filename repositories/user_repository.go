@@ -15,7 +15,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id uint) (*models.User, error)
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, id uint) error
-	List(ctx context.Context, page, pageSize int) ([]*models.User, int64, error)
+	List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error)
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 }
@@ -55,19 +55,51 @@ func (r *userRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error
 }
 
-// List 获取用户列表
-func (r *userRepository) List(ctx context.Context, page, pageSize int) ([]*models.User, int64, error) {
+// List 获取用户列表.
+func (r *userRepository) List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error) {
 	var users []*models.User
 	var total int64
+	var order string
 
-	offset := (page - 1) * pageSize
-	err := r.db.WithContext(ctx).Model(&models.User{}).Count(&total).Error
-	if err != nil {
+	// 构建查询.
+	db := r.db.WithContext(ctx).Model(&models.User{})
+
+	// 添加查询条件.
+	if query.Keyword != "" {
+		db = db.Where("username LIKE ? OR email LIKE ? OR nickname LIKE ?",
+			"%"+query.Keyword+"%",
+			"%"+query.Keyword+"%",
+			"%"+query.Keyword+"%")
+	}
+
+	if query.Status != 0 {
+		db = db.Where("status = ?", query.Status)
+	}
+
+	// 获取总数.
+	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err = r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&users).Error
-	if err != nil {
+	// 分页.
+	if query.Page > 0 && query.PageSize > 0 {
+		offset := (query.Page - 1) * query.PageSize
+		db = db.Offset(offset).Limit(query.PageSize)
+	}
+
+	// 排序.
+	if query.OrderBy != "" {
+		order = "desc"
+		if query.Order == "asc" {
+			order = "asc"
+		}
+		db = db.Order(query.OrderBy + " " + order)
+	} else {
+		db = db.Order("created_at DESC")
+	}
+
+	// 执行查询.
+	if err := db.Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 

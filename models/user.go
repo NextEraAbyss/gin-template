@@ -2,21 +2,22 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 // User 用户模型
 // 包含用户的基本信息、认证信息和时间戳
 type User struct {
-	gorm.Model
-	Username    string    `gorm:"type:varchar(50);uniqueIndex;not null" json:"username"` // 用户名，唯一
-	Password    string    `gorm:"type:varchar(255);not null" json:"-"`                   // 密码，不返回给前端
-	Email       string    `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`   // 邮箱，唯一
-	Nickname    string    `gorm:"type:varchar(50)" json:"nickname"`                      // 昵称
-	Avatar      string    `gorm:"type:varchar(255)" json:"avatar"`                       // 头像URL
-	Status      int       `gorm:"type:tinyint;default:1;index" json:"status"`            // 用户状态：1-正常，0-禁用
-	LastLoginAt time.Time `gorm:"type:timestamp;index" json:"last_login_at"`             // 最后登录时间
+	ID          uint       `gorm:"primarykey" json:"id"`                                          // 用户ID
+	CreatedAt   time.Time  `gorm:"type:datetime;not null" json:"created_at"`                      // 创建时间
+	UpdatedAt   time.Time  `gorm:"type:datetime;not null" json:"updated_at"`                      // 更新时间
+	DeletedAt   *time.Time `gorm:"index" json:"deleted_at"`                                       // 删除时间
+	Username    string     `gorm:"type:varchar(50);uniqueIndex;not null" json:"username"`         // 用户名，唯一
+	Password    string     `gorm:"type:varchar(255);not null" json:"-"`                           // 密码，不返回给前端
+	Email       string     `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`           // 邮箱，唯一
+	Nickname    string     `gorm:"type:varchar(50)" json:"nickname"`                              // 昵称
+	Avatar      string     `gorm:"type:varchar(255)" json:"avatar"`                               // 头像URL
+	Status      int        `gorm:"type:tinyint;default:1;index" json:"status"`                    // 用户状态：1-正常，0-禁用
+	LastLoginAt time.Time  `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"last_login_at"` // 最后登录时间
 }
 
 // TableName 指定表名
@@ -81,6 +82,17 @@ type UserQueryDTO struct {
 	Status   int    `form:"status" json:"status"`
 	OrderBy  string `form:"orderBy" json:"orderBy"`
 	Order    string `form:"order" json:"order"`
+}
+
+// ChangePasswordRequest 修改密码请求
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required"` // 旧密码
+	NewPassword string `json:"new_password" binding:"required"` // 新密码
+}
+
+// ResetPasswordRequest 重置密码请求
+type ResetPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"` // 邮箱地址
 }
 
 // UserListResponse 用户列表响应

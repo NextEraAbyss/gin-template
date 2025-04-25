@@ -18,6 +18,7 @@ func (e *AppError) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("%s: %v", e.Message, e.Err)
 	}
+
 	return e.Message
 }
 
@@ -89,6 +90,7 @@ func IsAppError(err error) (*AppError, bool) {
 	if errors.As(err, &appErr) {
 		return appErr, true
 	}
+
 	return nil, false
 }
 
@@ -97,5 +99,6 @@ func GetAppError(err error) *AppError {
 	if appErr, ok := IsAppError(err); ok {
 		return appErr
 	}
+
 	return ErrInternalServer(err)
 }

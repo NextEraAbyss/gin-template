@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"regexp"
 
 	"golang.org/x/crypto/bcrypt"
@@ -25,12 +26,14 @@ func CheckPassword(password, hash string) bool {
 }
 
 // GenerateRandomPassword 生成随机密码
-func GenerateRandomPassword() string {
+func GenerateRandomPassword() (string, error) {
 	// 生成32字节的随机数
 	b := make([]byte, 32)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate random password: %w", err)
+	}
 	// 使用base64编码，并去掉特殊字符
-	return base64.URLEncoding.EncodeToString(b)[:12]
+	return base64.URLEncoding.EncodeToString(b)[:12], nil
 }
 
 // ValidatePasswordStrength 验证密码强度
@@ -40,14 +43,35 @@ func ValidatePasswordStrength(password string) error {
 		return errors.New("password must be at least 8 characters long")
 	}
 
-	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(password)
+	hasNumber := regexp.MustCompile(`\d`).MatchString(password)
 	hasUpperCase := regexp.MustCompile(`[A-Z]`).MatchString(password)
 	hasLowerCase := regexp.MustCompile(`[a-z]`).MatchString(password)
-	hasSpecialChar := regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]`).MatchString(password)
+	hasSpecialChar := regexp.MustCompile(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]`).MatchString(password)
 
 	if !hasNumber || !hasUpperCase || !hasLowerCase || !hasSpecialChar {
 		return errors.New("password must contain at least one number, one uppercase letter, one lowercase letter, and one special character")
 	}
 
 	return nil
+}
+
+// 生成随机盐值
+func GenerateSalt() (string, error) {
+	// 生成32字节的随机数
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate salt: %w", err)
+	}
+	// 使用base64编码，并去掉特殊字符
+	return base64.URLEncoding.EncodeToString(b)[:12], nil
+}
+
+// GenerateRandomString 生成指定长度的随机字符串.
+func GenerateRandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
 }

@@ -6,8 +6,7 @@ import (
 	"log"
 	"time"
 
-	"gitee.com/NextEraAbyss/gin-template/config"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -17,33 +16,36 @@ var (
 	Ctx = context.Background()
 )
 
-// Init 初始化Redis连接
-func Init(config *config.Config) *redis.Client {
-	dsn := fmt.Sprintf("%s:%s", config.Redis.Host, config.Redis.Port)
-
+// InitRedis 初始化Redis连接
+func InitRedis(addr, password string, db int) error {
 	Client = redis.NewClient(&redis.Options{
-		Addr:     dsn,
-		Password: config.Redis.Password,
-		DB:       config.Redis.DB,
-		// 连接池配置
-		PoolSize:     10,
-		MinIdleConns: 5,
-		// 超时配置
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-		PoolTimeout:  4 * time.Second,
+		Addr:     addr,
+		Password: password,
+		DB:       db,
 	})
 
 	// 测试连接
-	_, err := Client.Ping(Ctx).Result()
-	if err != nil {
-		log.Printf("Warning: Failed to connect to Redis: %v", err)
-	} else {
-		log.Println("Connected to Redis successfully")
+	ctx := context.Background()
+	if err := Client.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("failed to connect to Redis: %v", err)
 	}
 
+	log.Println("Redis connected successfully")
+	return nil
+}
+
+// GetClient 获取Redis客户端
+func GetClient() *redis.Client {
 	return Client
+}
+
+// Close 关闭Redis连接.
+func Close() error {
+	if Client != nil {
+		return Client.Close()
+	}
+
+	return nil
 }
 
 // Set 设置键值对
