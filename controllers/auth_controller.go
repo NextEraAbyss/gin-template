@@ -5,6 +5,7 @@ import (
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/services"
 	"gitee.com/NextEraAbyss/gin-template/utils"
+	"gitee.com/NextEraAbyss/gin-template/validation"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,24 +27,25 @@ func NewAuthController(userService services.UserService) *AuthController {
 // @Tags         认证管理
 // @Accept       json
 // @Produce      json
-// @Param        register  body      models.RegisterRequest  true  "注册信息"
+// @Param        register  body      validation.UserCreateDTO  true  "注册信息"
 // @Success      200       {object}  utils.Response{data=models.UserResponse}
 // @Failure      400       {object}  utils.Response "参数错误"
 // @Failure      500       {object}  utils.Response "服务器内部错误"
 // @Router       /api/v1/auth/register [post]
 func (c *AuthController) Register(ctx *gin.Context) {
-	var req models.RegisterRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(ctx, errors.CodeInvalidParams, err.Error())
+	// 使用验证工具验证请求参数
+	var createDTO validation.UserCreateDTO
+	if !utils.ValidateJSON(ctx, &createDTO) {
 		return
 	}
 
 	// 创建用户
 	user := &models.User{
-		Username: req.Username,
-		Password: req.Password,
-		Email:    req.Email,
-		Nickname: req.FullName, // 使用 FullName 作为昵称
+		Username: createDTO.Username,
+		Password: createDTO.Password,
+		Email:    createDTO.Email,
+		Nickname: createDTO.Nickname,
+		Status:   createDTO.Status,
 	}
 
 	if err := c.userService.Create(ctx, user); err != nil {
@@ -60,19 +62,19 @@ func (c *AuthController) Register(ctx *gin.Context) {
 // @Tags         认证管理
 // @Accept       json
 // @Produce      json
-// @Param        login  body      models.LoginRequest  true  "登录信息"
+// @Param        login  body      validation.UserLoginDTO  true  "登录信息"
 // @Success      200    {object}  utils.Response{data=models.LoginResponse}
 // @Failure      400    {object}  utils.Response "参数错误"
 // @Failure      401    {object}  utils.Response "用户名或密码错误"
 // @Router       /api/v1/auth/login [post]
 func (c *AuthController) Login(ctx *gin.Context) {
-	var req models.LoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(ctx, errors.CodeInvalidParams, err.Error())
+	// 使用验证工具验证请求参数
+	var loginDTO validation.UserLoginDTO
+	if !utils.ValidateJSON(ctx, &loginDTO) {
 		return
 	}
 
-	token, user, err := c.userService.Login(ctx, req.Username, req.Password)
+	token, user, err := c.userService.Login(ctx, loginDTO.Username, loginDTO.Password)
 	if err != nil {
 		utils.ResponseError(ctx, errors.CodeLoginFailed, err.Error())
 		return

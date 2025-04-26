@@ -6,6 +6,7 @@ import (
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/services"
 	"gitee.com/NextEraAbyss/gin-template/utils"
+	"gitee.com/NextEraAbyss/gin-template/validation"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,47 +39,33 @@ func NewUserController(userService services.UserService) *UserController {
 // @Failure 500 {object} utils.Response "服务器内部错误"
 // @Router /api/v1/users [get]
 func (ctrl *UserController) List(c *gin.Context) {
-	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil || page < 1 {
-		page = 1
+	// 使用验证工具验证查询参数
+	var queryDTO validation.UserQueryDTO
+	if !utils.ValidateQuery(c, &queryDTO) {
+		return
 	}
 
-	pageSize, err := strconv.Atoi(c.DefaultQuery("page_size", "10"))
-	if err != nil || pageSize < 1 {
-		pageSize = 10
+	// 使用默认值
+	if queryDTO.Page <= 0 {
+		queryDTO.Page = 1
+	}
+	if queryDTO.PageSize <= 0 {
+		queryDTO.PageSize = 10
+	}
+	if queryDTO.OrderBy == "" {
+		queryDTO.OrderBy = "id"
+	}
+	if queryDTO.Order == "" {
+		queryDTO.Order = "desc"
 	}
 
-	// 获取搜索和排序参数
-	keyword := c.Query("keyword")
-	orderBy := c.DefaultQuery("order_by", "id")
-	order := c.DefaultQuery("order", "desc")
-
-	// 验证排序方向
-	if order != "asc" && order != "desc" {
-		order = "desc"
-	}
-
-	// 验证排序字段
-	validOrderFields := map[string]bool{
-		"id":         true,
-		"username":   true,
-		"email":      true,
-		"status":     true,
-		"created_at": true,
-		"updated_at": true,
-	}
-
-	if !validOrderFields[orderBy] {
-		orderBy = "id" // 默认按ID排序
-	}
-
-	// 创建查询参数对象
+	// 转换为模型层查询对象
 	query := &models.UserQueryDTO{
-		Page:     page,
-		PageSize: pageSize,
-		Keyword:  keyword,
-		OrderBy:  orderBy,
-		Order:    order,
+		Page:     queryDTO.Page,
+		PageSize: queryDTO.PageSize,
+		Keyword:  queryDTO.Keyword,
+		OrderBy:  queryDTO.OrderBy,
+		Order:    queryDTO.Order,
 	}
 
 	// 获取用户列表

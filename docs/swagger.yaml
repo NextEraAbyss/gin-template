@@ -12,42 +12,12 @@ definitions:
     - new_password
     - old_password
     type: object
-  models.LoginRequest:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
   models.LoginResponse:
     properties:
       token:
         type: string
       user:
         $ref: '#/definitions/models.User'
-    type: object
-  models.RegisterRequest:
-    properties:
-      email:
-        type: string
-      full_name:
-        type: string
-      password:
-        maxLength: 32
-        minLength: 6
-        type: string
-      username:
-        maxLength: 32
-        minLength: 3
-        type: string
-    required:
-    - email
-    - full_name
-    - password
-    - username
     type: object
   models.User:
     properties:
@@ -132,6 +102,42 @@ definitions:
         description: 错误信息
         type: string
     type: object
+  validation.UserCreateDTO:
+    properties:
+      email:
+        type: string
+      nickname:
+        maxLength: 32
+        type: string
+      password:
+        maxLength: 32
+        minLength: 6
+        type: string
+      status:
+        enum:
+        - 0
+        - 1
+        - 2
+        type: integer
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  validation.UserLoginDTO:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
 host: localhost:9999
 info:
   contact:
@@ -157,7 +163,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/models.LoginRequest'
+          $ref: '#/definitions/validation.UserLoginDTO'
       produces:
       - application/json
       responses:
@@ -192,7 +198,7 @@ paths:
         name: register
         required: true
         schema:
-          $ref: '#/definitions/models.RegisterRequest'
+          $ref: '#/definitions/validation.UserCreateDTO'
       produces:
       - application/json
       responses:

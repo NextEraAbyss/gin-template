@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.LoginRequest"
+                            "$ref": "#/definitions/validation.UserLoginDTO"
                         }
                     }
                 ],
@@ -102,7 +102,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.RegisterRequest"
+                            "$ref": "#/definitions/validation.UserCreateDTO"
                         }
                     }
                 ],
@@ -468,21 +468,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.LoginRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "models.LoginResponse": {
             "type": "object",
             "properties": {
@@ -491,33 +476,6 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/models.User"
-                }
-            }
-        },
-        "models.RegisterRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "full_name",
-                "password",
-                "username"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 6
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
                 }
             }
         },
@@ -633,6 +591,56 @@ const docTemplate = `{
                 },
                 "message": {
                     "description": "错误信息",
+                    "type": "string"
+                }
+            }
+        },
+        "validation.UserCreateDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "status": {
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1,
+                        2
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                }
+            }
+        },
+        "validation.UserLoginDTO": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
