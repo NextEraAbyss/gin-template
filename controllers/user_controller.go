@@ -30,6 +30,9 @@ func NewUserController(userService services.UserService) *UserController {
 // @Security Bearer
 // @Param page query int false "页码，默认为1" default(1)
 // @Param page_size query int false "每页数量，默认为10" default(10)
+// @Param keyword query string false "搜索关键词，支持用户名、邮箱和昵称搜索"
+// @Param order_by query string false "排序字段，支持id、username、created_at等" default(id)
+// @Param order query string false "排序方向，asc或desc" default(desc)
 // @Success 200 {object} models.UserListResponse "用户列表获取成功"
 // @Failure 401 {object} utils.Response "未授权"
 // @Failure 500 {object} utils.Response "服务器内部错误"
@@ -45,10 +48,37 @@ func (ctrl *UserController) List(c *gin.Context) {
 		pageSize = 10
 	}
 
+	// 获取搜索和排序参数
+	keyword := c.Query("keyword")
+	orderBy := c.DefaultQuery("order_by", "id")
+	order := c.DefaultQuery("order", "desc")
+
+	// 验证排序方向
+	if order != "asc" && order != "desc" {
+		order = "desc"
+	}
+
+	// 验证排序字段
+	validOrderFields := map[string]bool{
+		"id":         true,
+		"username":   true,
+		"email":      true,
+		"status":     true,
+		"created_at": true,
+		"updated_at": true,
+	}
+
+	if !validOrderFields[orderBy] {
+		orderBy = "id" // 默认按ID排序
+	}
+
 	// 创建查询参数对象
 	query := &models.UserQueryDTO{
 		Page:     page,
 		PageSize: pageSize,
+		Keyword:  keyword,
+		OrderBy:  orderBy,
+		Order:    order,
 	}
 
 	// 获取用户列表

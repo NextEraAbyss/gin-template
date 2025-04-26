@@ -166,6 +166,26 @@
                         "description": "每页数量，默认为10",
                         "name": "page_size",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索关键词，支持用户名、邮箱和昵称搜索",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "id",
+                        "description": "排序字段，支持id、username、created_at等",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向，asc或desc",
+                        "name": "order",
+                        "in": "query"
                     }
                 ],
                 "responses": {

@@ -232,6 +232,20 @@ paths:
         in: query
         name: page_size
         type: integer
+      - description: 搜索关键词，支持用户名、邮箱和昵称搜索
+        in: query
+        name: keyword
+        type: string
+      - default: id
+        description: 排序字段，支持id、username、created_at等
+        in: query
+        name: order_by
+        type: string
+      - default: desc
+        description: 排序方向，asc或desc
+        in: query
+        name: order
+        type: string
       produces:
       - application/json
       responses:
