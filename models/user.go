@@ -23,31 +23,3 @@ type User struct {
 func (User) TableName() string {
 	return "users"
 }
-
-// UserResponse 用户信息响应
-type UserResponse struct {
-	ID          uint      `json:"id"`            // 用户ID
-	Username    string    `json:"username"`      // 用户名
-	Email       string    `json:"email"`         // 邮箱
-	Nickname    string    `json:"nickname"`      // 昵称
-	Avatar      string    `json:"avatar"`        // 头像URL
-	Status      int       `json:"status"`        // 用户状态
-	LastLoginAt time.Time `json:"last_login_at"` // 最后登录时间
-	CreatedAt   time.Time `json:"created_at"`    // 创建时间
-	UpdatedAt   time.Time `json:"updated_at"`    // 更新时间
-}
-
-// ToResponse 将User模型转换为UserResponse
-func (u *User) ToResponse() *UserResponse {
-	return &UserResponse{
-		ID:          u.ID,
-		Username:    u.Username,
-		Email:       u.Email,
-		Nickname:    u.Nickname,
-		Avatar:      u.Avatar,
-		Status:      u.Status,
-		LastLoginAt: u.LastLoginAt,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
-	}
-}
