@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"gitee.com/NextEraAbyss/gin-template/internal/container"
-	"gitee.com/NextEraAbyss/gin-template/middleware"
+	"gitee.com/NextEraAbyss/gin-template/middlewares"
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -38,13 +38,13 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 全局中间件.
-	router.Use(middleware.RequestID())      // 请求ID中间件.
-	router.Use(middleware.Logger())         // 日志中间件.
-	router.Use(middleware.Recovery())       // 恢复中间件.
-	router.Use(middleware.ErrorHandler())   // 错误处理中间件.
-	router.Use(middleware.CorsMiddleware()) // CORS中间件.
-	router.Use(middleware.Security())
-	router.Use(middleware.RateLimit(100, time.Minute)) // 限制每分钟100个请求.
+	router.Use(middlewares.RequestID())      // 请求ID中间件.
+	router.Use(middlewares.Logger())         // 日志中间件.
+	router.Use(middlewares.Recovery())       // 恢复中间件.
+	router.Use(middlewares.ErrorHandler())   // 错误处理中间件.
+	router.Use(middlewares.CorsMiddleware()) // CORS中间件.
+	router.Use(middlewares.Security())
+	router.Use(middlewares.RateLimit(100, time.Minute)) // 限制每分钟100个请求.
 
 	// API路由组.
 	api := router.Group("/api/v1")
@@ -62,7 +62,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 
 	// 需要认证的路由组.
 	authUsers := users.Group("")
-	authUsers.Use(middleware.AuthMiddleware())
+	authUsers.Use(middlewares.AuthMiddleware())
 	authUsers.PUT("/:id", newContainer.GetUserController().Update)                      // 更新用户信息.
 	authUsers.DELETE("/:id", newContainer.GetUserController().Delete)                   // 删除用户.
 	authUsers.POST("/change-password", newContainer.GetUserController().ChangePassword) // 修改密码.
@@ -75,7 +75,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 
 	// 需要认证的接口.
 	authArticles := articles.Group("")
-	authArticles.Use(middleware.AuthMiddleware())
+	authArticles.Use(middlewares.AuthMiddleware())
 	authArticles.POST("", newContainer.GetArticleController().Create)       // 创建文章.
 	authArticles.PUT("/:id", newContainer.GetArticleController().Update)    // 更新文章.
 	authArticles.DELETE("/:id", newContainer.GetArticleController().Delete) // 删除文章.
