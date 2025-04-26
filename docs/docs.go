@@ -567,7 +567,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "email": {
-                    "description": "邮箱，唯一",
+                    "description": "邮箱",
                     "type": "string"
                 },
                 "id": {
@@ -583,7 +583,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "description": "用户状态：1-正常，0-禁用",
+                    "description": "用户状态",
                     "type": "integer"
                 },
                 "updated_at": {
@@ -591,7 +591,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
-                    "description": "用户名，唯一",
+                    "description": "用户名",
                     "type": "string"
                 }
             }
@@ -600,12 +600,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "用户列表",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.User"
                     }
                 },
                 "total": {
+                    "description": "总数",
                     "type": "integer"
                 }
             }

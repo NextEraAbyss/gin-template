@@ -40,7 +40,7 @@ func NewUserController(userService services.UserService) *UserController {
 // @Failure      500         {object}  utils.Response           "服务器内部错误"
 // @Router       /api/v1/users [get]
 func (ctrl *UserController) List(c *gin.Context) {
-	// 使用验证工具验证查询参数
+	// 验证查询参数
 	var queryDTO validation.UserQueryDTO
 	if !utils.ValidateQuery(c, &queryDTO) {
 		return

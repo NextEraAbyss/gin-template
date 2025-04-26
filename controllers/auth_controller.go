@@ -14,7 +14,7 @@ type AuthController struct {
 	userService services.UserService
 }
 
-// NewAuthController 创建新的认证控制器
+// NewAuthController 创建认证控制器
 func NewAuthController(userService services.UserService) *AuthController {
 	return &AuthController{
 		userService: userService,
@@ -35,7 +35,7 @@ func NewAuthController(userService services.UserService) *AuthController {
 // @Failure      500       {object}  utils.Response  "服务器内部错误"
 // @Router       /api/v1/auth/register [post]
 func (c *AuthController) Register(ctx *gin.Context) {
-	// 使用验证工具验证请求参数
+	// 验证请求参数
 	var createDTO validation.UserCreateDTO
 	if !utils.ValidateJSON(ctx, &createDTO) {
 		return
@@ -73,7 +73,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 // @Failure      500          {object}  utils.Response  "服务器内部错误"
 // @Router       /api/v1/auth/login [post]
 func (c *AuthController) Login(ctx *gin.Context) {
-	// 使用验证工具验证请求参数
+	// 验证请求参数
 	var loginDTO validation.UserLoginDTO
 	if !utils.ValidateJSON(ctx, &loginDTO) {
 		return

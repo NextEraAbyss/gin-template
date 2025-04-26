@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Logger 日志记录器结构体
+// Logger 日志记录器
 type Logger struct {
 	config *LogConfig
 }
@@ -58,30 +58,24 @@ func init() {
 	errorLogger = log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-// InitLogger 初始化日志系统.
+// InitLogger 初始化日志系统
 func InitLogger(level int, stdout, stderr io.Writer, showCallerInfo bool) {
-	// 设置日志级别.
 	logLevel = level
 
-	// 设置输出写入器.
 	if stdout == nil {
 		stdout = os.Stdout
 	}
-
 	infoLogger = log.New(stdout, "", log.LstdFlags)
 
-	// 设置错误写入器.
 	if stderr == nil {
 		stderr = os.Stderr
 	}
-
 	errorLogger = log.New(stderr, "", log.LstdFlags)
 
-	// 设置是否显示调用者信息.
 	showCaller = showCallerInfo
 }
 
-// getCallerInfo 获取调用者信息.
+// getCallerInfo 获取调用者信息
 func getCallerInfo() string {
 	_, filename, line, ok := runtime.Caller(2)
 	if !ok {

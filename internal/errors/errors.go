@@ -4,19 +4,19 @@ import (
 	"net/http"
 )
 
-// ErrorCode 错误码类型.
+// ErrorCode 错误码类型
 type ErrorCode int
 
-// Error 自定义错误类型.
+// Error 自定义错误
 type Error struct {
-	Code     ErrorCode `json:"code"`    // 错误码.
-	Message  string    `json:"message"` // 错误信息.
-	Details  string    `json:"details"` // 详细错误信息.
-	HTTPCode int       `json:"-"`       // HTTP状态码.
-	Err      error     `json:"-"`       // 嵌套错误.
+	Code     ErrorCode `json:"code"`    // 错误码
+	Message  string    `json:"message"` // 错误信息
+	Details  string    `json:"details"` // 详细信息
+	HTTPCode int       `json:"-"`       // HTTP状态码
+	Err      error     `json:"-"`       // 原始错误
 }
 
-// Error 实现error接口.
+// Error 实现error接口
 func (e *Error) Error() string {
 	if e == nil {
 		return ""
@@ -33,7 +33,7 @@ func (e *Error) Error() string {
 	return e.Err.Error()
 }
 
-// New 创建新的错误.
+// New 创建新的错误
 func New(code ErrorCode, message string) *Error {
 	return &Error{
 		Code:     code,
@@ -42,19 +42,19 @@ func New(code ErrorCode, message string) *Error {
 	}
 }
 
-// WithDetails 添加详细错误信息.
+// WithDetails 添加详细错误信息
 func (e *Error) WithDetails(details string) *Error {
 	e.Details = details
 	return e
 }
 
-// Wrap 包装已有错误.
+// Wrap 包装已有错误
 func Wrap(err error, code ErrorCode, message string) *Error {
 	if err == nil {
 		return nil
 	}
 
-	// 如果已经是自定义错误，则更新信息.
+	// 如果已经是自定义错误，则更新信息
 	if customErr, ok := err.(*Error); ok {
 		customErr.Code = code
 		customErr.Message = message
@@ -62,7 +62,7 @@ func Wrap(err error, code ErrorCode, message string) *Error {
 		return customErr
 	}
 
-	// 否则创建新的错误.
+	// 否则创建新的错误
 	return &Error{
 		Code:     code,
 		Message:  message,
@@ -72,7 +72,7 @@ func Wrap(err error, code ErrorCode, message string) *Error {
 	}
 }
 
-// GetHTTPCode 根据错误码获取对应的HTTP状态码.
+// GetHTTPCode 根据错误码获取对应的HTTP状态码
 func GetHTTPCode(code ErrorCode) int {
 	switch {
 	case code >= 1000 && code < 2000:

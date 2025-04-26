@@ -1,6 +1,6 @@
 package validation
 
-// UserQueryDTO 用户查询参数DTO
+// UserQueryDTO 用户查询参数
 type UserQueryDTO struct {
 	Page     int    `form:"page" binding:"omitempty,min=1"`
 	PageSize int    `form:"page_size" binding:"omitempty,min=1,max=100"`
@@ -9,7 +9,7 @@ type UserQueryDTO struct {
 	Order    string `form:"order" binding:"omitempty,oneof=asc desc"`
 }
 
-// UserCreateDTO 创建用户参数DTO
+// UserCreateDTO 创建用户参数
 type UserCreateDTO struct {
 	Username string `json:"username" binding:"required,min=3,max=32"`
 	Password string `json:"password" binding:"required,min=6,max=32"`
@@ -18,7 +18,7 @@ type UserCreateDTO struct {
 	Status   int    `json:"status" binding:"omitempty,oneof=0 1 2"`
 }
 
-// UserUpdateDTO 更新用户参数DTO
+// UserUpdateDTO 更新用户参数
 type UserUpdateDTO struct {
 	ID       uint   `json:"id" binding:"required"`
 	Username string `json:"username" binding:"omitempty,min=3,max=32"`
@@ -27,13 +27,13 @@ type UserUpdateDTO struct {
 	Status   int    `json:"status" binding:"omitempty,oneof=0 1 2"`
 }
 
-// UserLoginDTO 用户登录参数DTO
+// UserLoginDTO 用户登录参数
 type UserLoginDTO struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// UserChangePasswordDTO 修改密码参数DTO
+// UserChangePasswordDTO 修改密码参数
 type UserChangePasswordDTO struct {
 	OldPassword string `json:"old_password" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=6,max=32,nefield=OldPassword"`
