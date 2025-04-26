@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"gitee.com/NextEraAbyss/gin-template/config"
-	"gitee.com/NextEraAbyss/gin-template/internal/database"
+	"gitee.com/NextEraAbyss/gin-template/internal/mysql"
+	"gitee.com/NextEraAbyss/gin-template/internal/redis"
 	"gitee.com/NextEraAbyss/gin-template/routes"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 
@@ -50,10 +51,10 @@ func main() {
 	utils.InitLogger(utils.INFO, os.Stdout, os.Stderr, true)
 
 	// 初始化数据库.
-	db := database.Init(cfg)
+	db := mysql.InitDB(cfg)
 
 	// 初始化Redis.
-	redisClient := database.InitRedis(cfg)
+	redisClient := redis.InitRedis(cfg)
 
 	// 设置Gin模式.
 	if cfg.Env == EnvProduction {

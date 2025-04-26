@@ -33,19 +33,63 @@
 
 ```
 .
-├── config/         # 配置相关代码
-├── controllers/    # 控制器/处理器 (表示层)
-├── middleware/     # 中间件
-├── models/         # 数据模型和DTO
-├── repositories/   # 数据访问层
-├── routes/         # 路由设置
-├── services/       # 业务逻辑层
-├── utils/          # 工具函数
-├── internal/       # 内部包
-│   ├── database/   # 数据库管理
-│   └── redis/      # Redis缓存管理
-└── logs/           # 应用日志目录(运行时创建)
+├── config/           # 配置相关代码
+├── controllers/      # 控制器/处理器 (表示层)
+│   ├── auth_controller.go     # 认证相关控制器
+│   ├── base_controller.go     # 基础控制器
+│   └── user_controller.go     # 用户相关控制器
+├── middlewares/      # 中间件
+│   ├── auth_middleware.go     # JWT认证中间件
+│   ├── cors_middleware.go     # 跨域请求处理
+│   ├── error_handler.go       # 全局错误处理
+│   ├── logger.go              # 请求日志记录
+│   └── recovery.go            # 异常恢复处理
+├── models/           # 数据模型和DTO
+│   ├── auth.go                # 认证相关模型
+│   ├── dto.go                 # 数据传输对象
+│   └── user.go                # 用户模型
+├── repositories/     # 数据访问层
+│   ├── base_repository.go     # 基础仓储接口
+│   └── user_repository.go     # 用户数据访问
+├── routes/           # 路由设置
+│   └── routes.go              # API路由配置
+├── services/         # 业务逻辑层
+│   └── user_service.go        # 用户业务逻辑
+├── utils/            # 工具函数
+│   ├── jwt.go                 # JWT工具
+│   ├── logger.go              # 日志工具
+│   ├── password.go            # 密码处理
+│   └── response.go            # 统一响应格式
+├── internal/         # 内部包
+│   ├── database/     # 数据库管理
+│   │   └── database.go        # 数据库连接与管理
+│   ├── redis/        # Redis缓存管理
+│   │   └── redis.go           # Redis连接与操作
+│   ├── cache/        # 缓存逻辑
+│   │   └── cache.go           # 缓存接口与实现
+│   ├── container/    # 依赖注入容器
+│   │   └── container.go       # 依赖注入管理
+│   └── errors/       # 错误处理
+│       └── errors.go          # 错误码与错误类型
+├── main.go           # 应用入口
+└── logs/             # 应用日志目录(运行时创建)
 ```
+
+### 目录说明
+
+- **controllers/**: 处理HTTP请求，参数校验，调用业务逻辑，返回响应
+- **middlewares/**: Gin中间件，处理认证、日志记录、错误处理等横切关注点
+- **models/**: 定义数据库模型和数据传输对象(DTO)
+- **repositories/**: 数据访问层，处理数据库操作，实现持久化逻辑
+- **services/**: 业务逻辑层，实现核心业务规则，连接控制器和数据访问层
+- **routes/**: 路由配置，定义API路由和中间件关联
+- **utils/**: 工具函数，提供通用功能支持
+- **internal/**: 内部包，不暴露给外部应用的核心功能
+  - **database/**: 数据库连接与管理
+  - **redis/**: Redis缓存服务连接与管理
+  - **cache/**: 缓存逻辑实现，支持多级缓存
+  - **container/**: 依赖注入容器，管理组件间依赖
+  - **errors/**: 错误处理，定义统一错误码和错误类型
 
 ## 三层架构说明
 

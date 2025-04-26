@@ -12,18 +12,39 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserService 用户服务接口.
+// UserService 用户服务接口
 type UserService interface {
+	// Create 创建新用户
 	Create(ctx context.Context, user *models.User) error
+
+	// GetByID 根据ID获取用户
 	GetByID(ctx context.Context, id uint) (*models.User, error)
+
+	// Update 更新用户信息
 	Update(ctx context.Context, user *models.User) error
+
+	// Delete 删除用户
 	Delete(ctx context.Context, id uint) error
+
+	// List 获取用户列表
 	List(ctx context.Context, query *models.UserQueryDTO) ([]models.User, int64, error)
+
+	// GetByUsername 根据用户名获取用户
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
+
+	// GetByEmail 根据邮箱获取用户
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
+
+	// ChangePassword 修改密码
 	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
+
+	// ResetPassword 重置密码
 	ResetPassword(ctx context.Context, email string) error
+
+	// Login 用户登录
 	Login(ctx context.Context, username, password string) (string, *models.User, error)
+
+	// Register 用户注册
 	Register(ctx context.Context, user *models.User) error
 }
 

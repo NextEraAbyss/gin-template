@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"gitee.com/NextEraAbyss/gin-template/internal/redis"
+	redisClient "github.com/redis/go-redis/v9"
 )
 
 // Cache 定义缓存接口.
@@ -24,11 +25,18 @@ type Cache interface {
 
 // RedisCache Redis缓存实现.
 type RedisCache struct {
-	client *redis.Client
+	client *redisClient.Client
 }
 
 // NewRedisCache 创建Redis缓存实例.
-func NewRedisCache(client *redis.Client) Cache {
+func NewRedisCache() Cache {
+	return &RedisCache{
+		client: redis.Client,
+	}
+}
+
+// NewRedisCacheWithClient 创建Redis缓存实例，使用自定义客户端.
+func NewRedisCacheWithClient(client *redisClient.Client) Cache {
 	return &RedisCache{
 		client: client,
 	}
@@ -38,7 +46,7 @@ func NewRedisCache(client *redis.Client) Cache {
 func (c *RedisCache) Get(ctx context.Context, key string, value interface{}) error {
 	data, err := c.client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
+		if err == redisClient.Nil {
 			return nil
 		}
 

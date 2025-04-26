@@ -57,3 +57,4 @@ docs/swagger/
 coverage.txt
 
 # Air live reload
+docs

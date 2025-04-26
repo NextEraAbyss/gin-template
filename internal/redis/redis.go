@@ -3,9 +3,9 @@ package redis
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"gitee.com/NextEraAbyss/gin-template/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -17,63 +17,46 @@ var (
 )
 
 // InitRedis 初始化Redis连接
-func InitRedis(addr, password string, db int) error {
-	Client = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+func InitRedis(config *config.Config) *redis.Client {
+	// 创建Redis客户端
+	client := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", config.Redis.Host, config.Redis.Port),
+		Password:     config.Redis.Password,
+		DB:           config.Redis.DB,
+		PoolSize:     10,              // 默认连接池大小
+		MinIdleConns: 5,               // 默认最小空闲连接数
+		MaxRetries:   3,               // 最大重试次数
+		DialTimeout:  5 * time.Second, // 连接超时时间
+		ReadTimeout:  3 * time.Second, // 读取超时时间
+		WriteTimeout: 3 * time.Second, // 写入超时时间
 	})
 
 	// 测试连接
-	ctx := context.Background()
-	if err := Client.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("failed to connect to Redis: %v", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to connect to Redis: %v", err))
 	}
 
-	log.Println("Redis connected successfully")
+	Client = client
+	return client
+}
+
+// CloseRedis 关闭Redis连接
+func CloseRedis() error {
+	if Client != nil {
+		err := Client.Close()
+		if err != nil {
+			return err
+		}
+		Client = nil
+	}
 	return nil
 }
 
 // GetClient 获取Redis客户端
 func GetClient() *redis.Client {
 	return Client
-}
-
-// Close 关闭Redis连接.
-func Close() error {
-	if Client != nil {
-		return Client.Close()
-	}
-
-	return nil
-}
-
-// Set 设置键值对
-func Set(key string, value interface{}, expiration time.Duration) error {
-	return Client.Set(Ctx, key, value, expiration).Err()
-}
-
-// Get 获取键值
-func Get(key string) (string, error) {
-	return Client.Get(Ctx, key).Result()
-}
-
-// Delete 删除键
-func Delete(key string) error {
-	return Client.Del(Ctx, key).Err()
-}
-
-// SetHash 设置哈希表字段
-func SetHash(key, field string, value interface{}) error {
-	return Client.HSet(Ctx, key, field, value).Err()
-}
-
-// GetHash 获取哈希表字段
-func GetHash(key, field string) (string, error) {
-	return Client.HGet(Ctx, key, field).Result()
-}
-
-// HashExists 检查哈希表字段是否存在
-func HashExists(key, field string) (bool, error) {
-	return Client.HExists(Ctx, key, field).Result()
 }

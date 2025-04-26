@@ -1,5 +1,9 @@
 package services
 
+import (
+	"gitee.com/NextEraAbyss/gin-template/repositories"
+)
+
 // BaseService 定义基础服务接口
 type BaseService[T any, ID any] interface {
 	Create(entity *T) error
@@ -9,22 +13,10 @@ type BaseService[T any, ID any] interface {
 	Delete(id ID) error
 }
 
-// PaginationParams 分页参数
-type PaginationParams struct {
-	Page     int
-	PageSize int
-	Sort     string
-	Order    string
-	Search   string
-}
+// 使用仓库层定义的PaginationParams
+type PaginationParams = repositories.PaginationParams
 
 // NewPaginationParams 创建分页参数
 func NewPaginationParams(page, pageSize int, sort, order, search string) PaginationParams {
-	return PaginationParams{
-		Page:     page,
-		PageSize: pageSize,
-		Sort:     sort,
-		Order:    order,
-		Search:   search,
-	}
+	return repositories.NewPaginationParams(page, pageSize, sort, order, search)
 }

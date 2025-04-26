@@ -1,4 +1,4 @@
-package database
+package mysql
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"gitee.com/NextEraAbyss/gin-template/internal/redis"
+	"gitee.com/NextEraAbyss/gin-template/internal/cache"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -34,7 +34,7 @@ type QueryBuilder struct {
 	db      *gorm.DB
 	query   *gorm.DB
 	context context.Context
-	cache   redis.Cache
+	cache   cache.Cache
 	// 慢查询阈值.
 	slowQueryThreshold time.Duration
 	// 是否启用缓存.
@@ -175,8 +175,8 @@ func (qb *QueryBuilder) Joins(query string, args ...interface{}) *QueryBuilder {
 }
 
 // WithCache 启用缓存.
-func (qb *QueryBuilder) WithCache(cache redis.Cache, expiration time.Duration) *QueryBuilder {
-	qb.cache = cache
+func (qb *QueryBuilder) WithCache(cacheInstance cache.Cache, expiration time.Duration) *QueryBuilder {
+	qb.cache = cacheInstance
 	qb.enableCache = true
 	qb.cacheExpiration = expiration
 
