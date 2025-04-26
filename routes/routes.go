@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"time"
+
 	"gitee.com/NextEraAbyss/gin-template/internal/container"
 	"gitee.com/NextEraAbyss/gin-template/middlewares"
 	"gitee.com/NextEraAbyss/gin-template/models"
@@ -31,10 +33,13 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 保留必要的全局中间件
-	router.Use(middlewares.Logger())         // 日志中间件
-	router.Use(middlewares.Recovery())       // 恢复中间件
-	router.Use(middlewares.ErrorHandler())   // 错误处理中间件
-	router.Use(middlewares.CorsMiddleware()) // CORS中间件
+	router.Use(middlewares.RequestID())                  // 请求ID中间件，便于追踪请求
+	router.Use(middlewares.Logger())                     // 日志中间件
+	router.Use(middlewares.Recovery())                   // 恢复中间件
+	router.Use(middlewares.ErrorHandler())               // 错误处理中间件
+	router.Use(middlewares.CorsMiddleware())             // CORS中间件
+	router.Use(middlewares.Security())                   // 安全中间件，添加安全相关HTTP头
+	router.Use(middlewares.RateLimit(1000, time.Minute)) // 限流中间件，每分钟最多1000个请求
 
 	// API路由组
 	api := router.Group("/api/v1")

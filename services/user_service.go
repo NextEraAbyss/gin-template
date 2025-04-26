@@ -58,26 +58,26 @@ func NewUserService(repo repositories.UserRepository) UserService {
 	return &userService{repo: repo}
 }
 
-// Create 创建用户.
+// Create 创建用户
 func (s *userService) Create(ctx context.Context, user *models.User) error {
-	// 检查用户名是否已存在.
+	// 检查用户名是否已存在
 	existingUser, err := s.repo.GetByUsername(ctx, user.Username)
 	if err == nil && existingUser != nil {
 		return errors.New("用户名已存在")
 	}
 
-	// 检查邮箱是否已存在.
+	// 检查邮箱是否已存在
 	existingUser, err = s.repo.GetByEmail(ctx, user.Email)
 	if err == nil && existingUser != nil {
 		return errors.New("邮箱已存在")
 	}
 
-	// 验证密码强度.
+	// 验证密码强度
 	if err := utils.ValidatePasswordStrength(user.Password); err != nil {
 		return err
 	}
 
-	// 加密密码.
+	// 加密密码
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return err
@@ -85,12 +85,12 @@ func (s *userService) Create(ctx context.Context, user *models.User) error {
 
 	user.Password = hashedPassword
 
-	// 设置默认状态.
+	// 设置默认状态
 	if user.Status == 0 {
 		user.Status = 1
 	}
 
-	// 设置最后登录时间为当前时间.
+	// 设置最后登录时间为当前时间
 	user.LastLoginAt = time.Now()
 
 	return s.repo.Create(ctx, user)
@@ -101,9 +101,9 @@ func (s *userService) GetByID(ctx context.Context, id uint) (*models.User, error
 	return s.repo.GetByID(ctx, id)
 }
 
-// Update 更新用户信息.
+// Update 更新用户信息
 func (s *userService) Update(ctx context.Context, user *models.User) error {
-	// 检查用户是否存在.
+	// 检查用户是否存在
 	existingUser, err := s.repo.GetByID(ctx, user.ID)
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func (s *userService) Update(ctx context.Context, user *models.User) error {
 		return fmt.Errorf("用户不存在")
 	}
 
-	// 如果更新了密码，需要重新加密.
+	// 如果更新了密码，需要重新加密
 	if user.Password != "" && user.Password != existingUser.Password {
 		hashedPassword, err := utils.HashPassword(user.Password)
 		if err != nil {
@@ -123,7 +123,7 @@ func (s *userService) Update(ctx context.Context, user *models.User) error {
 		user.Password = hashedPassword
 	}
 
-	// 更新用户信息.
+	// 更新用户信息
 	return s.repo.Update(ctx, user)
 }
 
@@ -151,9 +151,9 @@ func (s *userService) GetByEmail(ctx context.Context, email string) (*models.Use
 	return s.repo.GetByEmail(ctx, email)
 }
 
-// List 获取用户列表.
+// List 获取用户列表
 func (s *userService) List(ctx context.Context, query *models.UserQueryDTO) ([]models.User, int64, error) {
-	// 设置默认值.
+	// 设置默认值
 	if query.Page <= 0 {
 		query.Page = 1
 	}
@@ -167,7 +167,7 @@ func (s *userService) List(ctx context.Context, query *models.UserQueryDTO) ([]m
 		return nil, 0, err
 	}
 
-	// 转换为非指针切片.
+	// 转换为非指针切片
 	items := make([]models.User, 0, len(users))
 
 	for _, user := range users {
@@ -271,7 +271,7 @@ func (s *userService) Login(ctx context.Context, username, password string) (str
 	return token, user, nil
 }
 
-// Register 注册用户.
+// Register 注册用户
 func (s *userService) Register(ctx context.Context, user *models.User) error {
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {

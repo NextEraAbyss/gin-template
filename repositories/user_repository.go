@@ -55,16 +55,16 @@ func (r *userRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error
 }
 
-// List 获取用户列表.
+// List 获取用户列表
 func (r *userRepository) List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error) {
 	var users []*models.User
 	var total int64
 	var order string
 
-	// 构建查询.
+	// 构建查询
 	db := r.db.WithContext(ctx).Model(&models.User{})
 
-	// 添加查询条件.
+	// 添加查询条件
 	if query.Keyword != "" {
 		db = db.Where("username LIKE ? OR email LIKE ? OR nickname LIKE ?",
 			"%"+query.Keyword+"%",
@@ -76,18 +76,18 @@ func (r *userRepository) List(ctx context.Context, query *models.UserQueryDTO) (
 		db = db.Where("status = ?", query.Status)
 	}
 
-	// 获取总数.
+	// 获取总数
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// 分页.
+	// 分页
 	if query.Page > 0 && query.PageSize > 0 {
 		offset := (query.Page - 1) * query.PageSize
 		db = db.Offset(offset).Limit(query.PageSize)
 	}
 
-	// 排序.
+	// 排序
 	if query.OrderBy != "" {
 		order = "desc"
 		if query.Order == "asc" {
@@ -98,7 +98,7 @@ func (r *userRepository) List(ctx context.Context, query *models.UserQueryDTO) (
 		db = db.Order("created_at DESC")
 	}
 
-	// 执行查询.
+	// 执行查询
 	if err := db.Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
