@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"gitee.com/NextEraAbyss/gin-template/internal/errors"
-	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/services"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 	"gitee.com/NextEraAbyss/gin-template/validation"
@@ -28,7 +26,7 @@ func NewAuthController(userService services.UserService) *AuthController {
 // @Accept       json
 // @Produce      json
 // @Param        userData  body      validation.UserCreateDTO  true  "用户注册信息，包含用户名、密码、邮箱等"
-// @Success      200       {object}  utils.Response{data=models.UserResponse}  "注册成功，返回用户信息"
+// @Success      200       {object}  utils.Response{data=validation.UserResponseDTO}  "注册成功，返回用户信息"
 // @Failure      400       {object}  utils.Response  "请求参数错误，包括格式不正确或必填字段缺失"
 // @Failure      409       {object}  utils.Response  "用户名或邮箱已被占用"
 // @Failure      422       {object}  utils.Response  "密码强度不符合要求"
@@ -41,21 +39,17 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	// 创建用户
-	user := &models.User{
-		Username: createDTO.Username,
-		Password: createDTO.Password,
-		Email:    createDTO.Email,
-		Nickname: createDTO.Nickname,
-		Status:   createDTO.Status,
-	}
+	// 转换为User模型
+	user := createDTO.ToModel()
 
-	if err := c.userService.Create(ctx, user); err != nil {
-		utils.ResponseError(ctx, errors.CodeRegisterFailed, err.Error())
+	// 注册用户
+	if err := c.userService.Register(ctx, &user); err != nil {
+		utils.ResponseError(ctx, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	utils.ResponseSuccess(ctx, user.ToResponse())
+	// 返回注册成功的用户信息
+	utils.ResponseSuccess(ctx, validation.FromUser(user))
 }
 
 // Login 用户登录
@@ -65,7 +59,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      validation.UserLoginDTO  true  "登录凭证，包含用户名和密码"
-// @Success      200          {object}  utils.Response{data=models.LoginResponse}  "登录成功，返回访问令牌和用户信息"
+// @Success      200          {object}  utils.Response{data=validation.LoginResponseDTO}  "登录成功，返回访问令牌和用户信息"
 // @Failure      400          {object}  utils.Response  "请求参数错误，包括格式不正确或必填字段缺失"
 // @Failure      401          {object}  utils.Response  "用户名或密码错误"
 // @Failure      403          {object}  utils.Response  "账号已被禁用"
@@ -79,14 +73,19 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	// 登录用户
 	token, user, err := c.userService.Login(ctx, loginDTO.Username, loginDTO.Password)
 	if err != nil {
-		utils.ResponseError(ctx, errors.CodeLoginFailed, err.Error())
+		utils.ResponseError(ctx, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	utils.ResponseSuccess(ctx, models.LoginResponse{
+	// 转换为DTO响应
+	userDTO := validation.FromUser(*user)
+
+	// 返回登录响应
+	utils.ResponseSuccess(ctx, validation.LoginResponseDTO{
 		Token: token,
-		User:  *user,
+		User:  userDTO,
 	})
 }

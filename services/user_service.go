@@ -12,8 +12,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// BaseService 基础服务接口，定义通用的服务方法
+type BaseService interface {
+	// 获取服务名称
+	ServiceName() string
+}
+
 // UserService 用户服务接口
 type UserService interface {
+	BaseService
+
 	// Create 创建新用户
 	Create(ctx context.Context, user *models.User) error
 
@@ -51,6 +59,11 @@ type UserService interface {
 // userService 用户服务实现
 type userService struct {
 	repo repositories.UserRepository
+}
+
+// ServiceName 获取服务名称
+func (s *userService) ServiceName() string {
+	return "UserService"
 }
 
 // NewUserService 创建用户服务实例
@@ -94,6 +107,12 @@ func (s *userService) Create(ctx context.Context, user *models.User) error {
 	user.LastLoginAt = time.Now()
 
 	return s.repo.Create(ctx, user)
+}
+
+// Register 注册用户 - 专门用于注册流程
+func (s *userService) Register(ctx context.Context, user *models.User) error {
+	// 复用Create方法的逻辑
+	return s.Create(ctx, user)
 }
 
 // GetByID 根据ID获取用户
@@ -269,15 +288,4 @@ func (s *userService) Login(ctx context.Context, username, password string) (str
 	}
 
 	return token, user, nil
-}
-
-// Register 注册用户
-func (s *userService) Register(ctx context.Context, user *models.User) error {
-	hashedPassword, err := utils.HashPassword(user.Password)
-	if err != nil {
-		return err
-	}
-
-	user.Password = hashedPassword
-	return s.repo.Create(ctx, user)
 }

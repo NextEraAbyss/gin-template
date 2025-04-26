@@ -8,8 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// BaseRepository 基础仓库接口，定义通用操作
+type BaseRepository interface {
+	// RepositoryName 获取仓库名称
+	RepositoryName() string
+}
+
 // UserRepository 用户仓库接口
 type UserRepository interface {
+	BaseRepository
+
 	// Create 创建用户
 	Create(ctx context.Context, user *models.User) error
 
@@ -35,6 +43,11 @@ type UserRepository interface {
 // userRepository 实现 UserRepository 接口
 type userRepository struct {
 	db *gorm.DB
+}
+
+// RepositoryName 获取仓库名称
+func (r *userRepository) RepositoryName() string {
+	return "UserRepository"
 }
 
 // NewUserRepository 创建一个新的 UserRepository 实例

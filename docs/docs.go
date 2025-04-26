@@ -60,7 +60,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.LoginResponse"
+                                            "$ref": "#/definitions/validation.LoginResponseDTO"
                                         }
                                     }
                                 }
@@ -136,7 +136,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.UserResponse"
+                                            "$ref": "#/definitions/validation.UserResponseDTO"
                                         }
                                     }
                                 }
@@ -228,7 +228,7 @@ const docTemplate = `{
                     "200": {
                         "description": "用户列表数据，包含总数和分页记录",
                         "schema": {
-                            "$ref": "#/definitions/models.UserListResponse"
+                            "$ref": "#/definitions/controllers.UserListResponse"
                         }
                     },
                     "400": {
@@ -277,7 +277,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ChangePasswordRequest"
+                            "$ref": "#/definitions/validation.UserChangePasswordDTO"
                         }
                     }
                 ],
@@ -352,7 +352,7 @@ const docTemplate = `{
                     "200": {
                         "description": "用户详细信息",
                         "schema": {
-                            "$ref": "#/definitions/models.UserResponse"
+                            "$ref": "#/definitions/validation.UserResponseDTO"
                         }
                     },
                     "400": {
@@ -420,7 +420,7 @@ const docTemplate = `{
                     "200": {
                         "description": "更新后的用户信息",
                         "schema": {
-                            "$ref": "#/definitions/models.UserResponse"
+                            "$ref": "#/definitions/validation.UserResponseDTO"
                         }
                     },
                     "400": {
@@ -523,133 +523,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.ChangePasswordRequest": {
-            "type": "object",
-            "required": [
-                "new_password",
-                "old_password"
-            ],
-            "properties": {
-                "new_password": {
-                    "description": "新密码",
-                    "type": "string"
-                },
-                "old_password": {
-                    "description": "旧密码",
-                    "type": "string"
-                }
-            }
-        },
-        "models.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/models.User"
-                }
-            }
-        },
-        "models.User": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "description": "头像URL",
-                    "type": "string"
-                },
-                "created_at": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "description": "删除时间",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "邮箱",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "用户ID",
-                    "type": "integer"
-                },
-                "last_login_at": {
-                    "description": "最后登录时间",
-                    "type": "string"
-                },
-                "nickname": {
-                    "description": "昵称",
-                    "type": "string"
-                },
-                "status": {
-                    "description": "用户状态",
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "description": "更新时间",
-                    "type": "string"
-                },
-                "username": {
-                    "description": "用户名",
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserListResponse": {
+        "controllers.UserListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "description": "用户列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.User"
+                        "$ref": "#/definitions/validation.UserResponseDTO"
                     }
                 },
                 "total": {
                     "description": "总数",
                     "type": "integer"
-                }
-            }
-        },
-        "models.UserResponse": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "description": "头像URL",
-                    "type": "string"
-                },
-                "created_at": {
-                    "description": "创建时间",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "邮箱",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "用户ID",
-                    "type": "integer"
-                },
-                "last_login_at": {
-                    "description": "最后登录时间",
-                    "type": "string"
-                },
-                "nickname": {
-                    "description": "昵称",
-                    "type": "string"
-                },
-                "status": {
-                    "description": "用户状态",
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "description": "更新时间",
-                    "type": "string"
-                },
-                "username": {
-                    "description": "用户名",
-                    "type": "string"
                 }
             }
         },
@@ -665,6 +551,34 @@ const docTemplate = `{
                 },
                 "message": {
                     "description": "错误信息",
+                    "type": "string"
+                }
+            }
+        },
+        "validation.LoginResponseDTO": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/validation.UserResponseDTO"
+                }
+            }
+        },
+        "validation.UserChangePasswordDTO": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "old_password": {
                     "type": "string"
                 }
             }
@@ -712,6 +626,38 @@ const docTemplate = `{
             ],
             "properties": {
                 "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "validation.UserResponseDTO": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "username": {

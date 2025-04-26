@@ -10,6 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UserListResponse 用户列表响应
+type UserListResponse struct {
+	Total int64                        `json:"total"` // 总数
+	Items []validation.UserResponseDTO `json:"items"` // 用户列表
+}
+
 // UserController 用户控制器
 type UserController struct {
 	userService services.UserService
@@ -34,7 +40,7 @@ func NewUserController(userService services.UserService) *UserController {
 // @Param        keyword     query    string  false  "搜索关键词，支持用户名、邮箱和昵称模糊搜索"
 // @Param        order_by    query    string  false  "排序字段，支持id、username、created_at等"  default(id)
 // @Param        order       query    string  false  "排序方向: asc(升序)或desc(降序)"     default(desc)
-// @Success      200         {object}  models.UserListResponse  "用户列表数据，包含总数和分页记录"
+// @Success      200         {object}  UserListResponse  "用户列表数据，包含总数和分页记录"
 // @Failure      400         {object}  utils.Response           "请求参数错误"
 // @Failure      401         {object}  utils.Response           "未授权，请先登录"
 // @Failure      500         {object}  utils.Response           "服务器内部错误"
@@ -46,7 +52,7 @@ func (ctrl *UserController) List(c *gin.Context) {
 		return
 	}
 
-	// 使用默认值
+	// 设置默认值
 	if queryDTO.Page <= 0 {
 		queryDTO.Page = 1
 	}
@@ -76,10 +82,16 @@ func (ctrl *UserController) List(c *gin.Context) {
 		return
 	}
 
+	// 转换为DTO响应
+	items := make([]validation.UserResponseDTO, 0, len(users))
+	for _, user := range users {
+		items = append(items, validation.FromUser(user))
+	}
+
 	// 返回结果
-	utils.ResponseSuccess(c, models.UserListResponse{
+	utils.ResponseSuccess(c, UserListResponse{
 		Total: total,
-		Items: users,
+		Items: items,
 	})
 }
 
@@ -91,26 +103,29 @@ func (ctrl *UserController) List(c *gin.Context) {
 // @Produce      json
 // @Security     Bearer
 // @Param        id          path     int  true   "用户ID (必填)"
-// @Success      200         {object}  models.UserResponse  "用户详细信息"
+// @Success      200         {object}  validation.UserResponseDTO  "用户详细信息"
 // @Failure      400         {object}  utils.Response       "用户ID格式错误"
 // @Failure      401         {object}  utils.Response       "未授权，请先登录"
 // @Failure      404         {object}  utils.Response       "用户不存在"
 // @Failure      500         {object}  utils.Response       "服务器内部错误"
 // @Router       /api/v1/users/{id} [get]
 func (ctrl *UserController) Get(c *gin.Context) {
+	// 解析用户ID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
+	// 获取用户信息
 	user, err := ctrl.userService.GetByID(c.Request.Context(), uint(id))
 	if err != nil {
 		utils.ResponseError(c, utils.CodeUserNotFound, "用户不存在")
 		return
 	}
 
-	utils.ResponseSuccess(c, user.ToResponse())
+	// 返回用户信息
+	utils.ResponseSuccess(c, validation.FromUser(*user))
 }
 
 // Update 更新用户信息
@@ -122,7 +137,7 @@ func (ctrl *UserController) Get(c *gin.Context) {
 // @Security     Bearer
 // @Param        id          path     int           true   "用户ID (必填)"
 // @Param        user        body     validation.UserUpdateDTO  true   "用户信息更新内容"
-// @Success      200         {object}  models.UserResponse       "更新后的用户信息"
+// @Success      200         {object}  validation.UserResponseDTO       "更新后的用户信息"
 // @Failure      400         {object}  utils.Response            "请求参数错误"
 // @Failure      401         {object}  utils.Response            "未授权，请先登录"
 // @Failure      403         {object}  utils.Response            "无权限操作此用户"
@@ -130,25 +145,38 @@ func (ctrl *UserController) Get(c *gin.Context) {
 // @Failure      500         {object}  utils.Response            "服务器内部错误"
 // @Router       /api/v1/users/{id} [put]
 func (ctrl *UserController) Update(c *gin.Context) {
+	// 解析用户ID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
-	var user models.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
+	// 验证请求参数
+	var updateDTO validation.UserUpdateDTO
+	if !utils.ValidateJSON(c, &updateDTO) {
 		return
 	}
 
-	user.ID = uint(id)
-	if err := ctrl.userService.Update(c.Request.Context(), &user); err != nil {
+	// 获取原用户信息
+	user, err := ctrl.userService.GetByID(c.Request.Context(), uint(id))
+	if err != nil {
+		utils.ResponseError(c, utils.CodeUserNotFound, "用户不存在")
+		return
+	}
+
+	// 更新用户信息
+	updateDTO.ID = uint(id)
+	updateDTO.UpdateModel(user)
+
+	// 保存更新
+	if err := ctrl.userService.Update(c.Request.Context(), user); err != nil {
 		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
-	utils.ResponseSuccess(c, user.ToResponse())
+	// 返回更新后的用户信息
+	utils.ResponseSuccess(c, validation.FromUser(*user))
 }
 
 // Delete 删除用户
@@ -167,17 +195,20 @@ func (ctrl *UserController) Update(c *gin.Context) {
 // @Failure      500         {object}  utils.Response   "服务器内部错误"
 // @Router       /api/v1/users/{id} [delete]
 func (ctrl *UserController) Delete(c *gin.Context) {
+	// 解析用户ID
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		utils.ResponseError(c, utils.CodeInvalidParams, "无效的用户ID")
 		return
 	}
 
+	// 删除用户
 	if err := ctrl.userService.Delete(c.Request.Context(), uint(id)); err != nil {
 		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
+	// 返回成功响应
 	utils.ResponseSuccess(c, nil)
 }
 
@@ -188,7 +219,7 @@ func (ctrl *UserController) Delete(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Security     Bearer
-// @Param        passwordData  body     models.ChangePasswordRequest  true   "密码修改数据，包含旧密码和新密码"
+// @Param        passwordData  body     validation.UserChangePasswordDTO  true   "密码修改数据，包含旧密码和新密码"
 // @Success      200           {object}  utils.Response               "密码修改成功"
 // @Failure      400           {object}  utils.Response               "请求参数错误"
 // @Failure      401           {object}  utils.Response               "未授权，请先登录"
@@ -197,9 +228,9 @@ func (ctrl *UserController) Delete(c *gin.Context) {
 // @Failure      500           {object}  utils.Response               "服务器内部错误"
 // @Router       /api/v1/users/change-password [post]
 func (ctrl *UserController) ChangePassword(c *gin.Context) {
-	var req models.ChangePasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ResponseError(c, utils.CodeInvalidParams, err.Error())
+	// 验证请求参数
+	var passwordDTO validation.UserChangePasswordDTO
+	if !utils.ValidateJSON(c, &passwordDTO) {
 		return
 	}
 
@@ -210,10 +241,13 @@ func (ctrl *UserController) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := ctrl.userService.ChangePassword(c.Request.Context(), userID.(uint), req.OldPassword, req.NewPassword); err != nil {
+	// 修改密码
+	if err := ctrl.userService.ChangePassword(c.Request.Context(), userID.(uint),
+		passwordDTO.OldPassword, passwordDTO.NewPassword); err != nil {
 		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
 	}
 
+	// 返回成功响应
 	utils.ResponseSuccess(c, nil)
 }

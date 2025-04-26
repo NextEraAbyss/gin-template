@@ -4,7 +4,6 @@ import (
 	"log"
 	"runtime/debug"
 
-	"gitee.com/NextEraAbyss/gin-template/internal/errors"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +18,7 @@ func Recovery() gin.HandlerFunc {
 				log.Printf("Panic: %v\nStack: %s", err, debug.Stack())
 
 				// 返回错误响应
-				utils.ResponseError(c, errors.CodeInternalError, "系统内部错误")
+				utils.ResponseError(c, utils.CodeInternalError, "系统内部错误")
 
 				// 中止请求处理
 				c.Abort()

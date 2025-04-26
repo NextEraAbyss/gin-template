@@ -16,12 +16,12 @@ func ErrorHandler() gin.HandlerFunc {
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
 			if customErr, ok := err.(*errors.Error); ok {
-				utils.ResponseError(c, customErr.Code, customErr.Message)
+				utils.ResponseError(c, utils.ErrorCode(customErr.Code), customErr.Message)
 				return
 			}
 
 			// 处理其他错误
-			utils.ResponseError(c, errors.CodeInternalError, "服务器内部错误")
+			utils.ResponseError(c, utils.CodeInternalError, "服务器内部错误")
 		}
 	}
 }
