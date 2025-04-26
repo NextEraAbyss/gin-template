@@ -62,11 +62,6 @@ const (
 	CodeTokenInvalid  = 2005 // Token无效
 	CodeUserDisabled  = 2006 // 用户已禁用
 
-	// 文章相关错误 (3000-3999)
-	CodeArticleNotFound  = 3001 // 文章不存在
-	CodeArticleExists    = 3002 // 文章已存在
-	CodeArticleForbidden = 3003 // 无权操作文章
-
 	// 评论相关错误 (4000-4999)
 	CodeCommentNotFound  = 4001 // 评论不存在
 	CodeCommentForbidden = 4002 // 无权操作评论
@@ -88,11 +83,6 @@ var CodeMessages = map[int]string{
 	CodeTokenExpired:  "Token已过期",
 	CodeTokenInvalid:  "Token无效",
 	CodeUserDisabled:  "用户已禁用",
-
-	// 文章相关错误消息
-	CodeArticleNotFound:  "文章不存在",
-	CodeArticleExists:    "文章已存在",
-	CodeArticleForbidden: "无权操作文章",
 
 	// 评论相关错误消息
 	CodeCommentNotFound:  "评论不存在",

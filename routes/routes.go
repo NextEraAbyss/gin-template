@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"time"
-
 	"gitee.com/NextEraAbyss/gin-template/internal/container"
 	"gitee.com/NextEraAbyss/gin-template/middlewares"
 	"gitee.com/NextEraAbyss/gin-template/models"
@@ -13,72 +11,50 @@ import (
 	"gorm.io/gorm"
 )
 
-// SetupRoutes 配置所有路由.
-// 该函数负责设置应用的所有路由，包括API路由和中间件.
-// 参数:
-//   - router: Gin引擎实例.
-//   - db: 数据库连接.
-//   - redisClient: Redis客户端.
+// SetupRoutes 配置所有路由
+// 极简版本 - 只保留用户相关功能
 func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 	err := db.AutoMigrate(
-		&models.User{},    // 用户表.
-		&models.Article{}, // 文章表.
+		&models.User{}, // 只保留用户表
 	)
 	if err != nil {
 		panic("数据库迁移失败: " + err.Error())
 	}
 
-	// 创建依赖注入容器.
+	// 创建依赖注入容器
 	newContainer := container.NewContainer(db, redisClient)
 	newContainer.InitRepositories()
 	newContainer.InitServices()
 	newContainer.InitControllers()
 
-	// Swagger 文档路由 - 在全局中间件之前注册，避免 CSP 限制.
+	// Swagger 文档路由
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// 全局中间件.
-	router.Use(middlewares.RequestID())      // 请求ID中间件.
-	router.Use(middlewares.Logger())         // 日志中间件.
-	router.Use(middlewares.Recovery())       // 恢复中间件.
-	router.Use(middlewares.ErrorHandler())   // 错误处理中间件.
-	router.Use(middlewares.CorsMiddleware()) // CORS中间件.
-	router.Use(middlewares.Security())
-	router.Use(middlewares.RateLimit(100, time.Minute)) // 限制每分钟100个请求.
+	// 保留必要的全局中间件
+	router.Use(middlewares.Logger())         // 日志中间件
+	router.Use(middlewares.Recovery())       // 恢复中间件
+	router.Use(middlewares.ErrorHandler())   // 错误处理中间件
+	router.Use(middlewares.CorsMiddleware()) // CORS中间件
 
-	// API路由组.
+	// API路由组
 	api := router.Group("/api/v1")
 
-	// 用户认证相关路由.
+	// 认证相关路由 - 保留登录和注册
 	auth := api.Group("/auth")
-	auth.POST("/login", newContainer.GetAuthController().Login)
-	auth.POST("/register", newContainer.GetAuthController().Register)
+	auth.POST("/login", newContainer.GetAuthController().Login)       // 登录
+	auth.POST("/register", newContainer.GetAuthController().Register) // 注册
 
-	// 用户相关路由.
+	// 用户相关路由
 	users := api.Group("/users")
-	// 公开接口 - 不需要认证.
-	users.GET("", newContainer.GetUserController().List)    // 获取所有用户.
-	users.GET("/:id", newContainer.GetUserController().Get) // 根据ID获取用户.
+	users.GET("", newContainer.GetUserController().List)    // 获取用户列表
+	users.GET("/:id", newContainer.GetUserController().Get) // 获取单个用户
 
-	// 需要认证的路由组.
-	authUsers := users.Group("")
-	authUsers.Use(middlewares.AuthMiddleware())
-	authUsers.PUT("/:id", newContainer.GetUserController().Update)                      // 更新用户信息.
-	authUsers.DELETE("/:id", newContainer.GetUserController().Delete)                   // 删除用户.
-	authUsers.POST("/change-password", newContainer.GetUserController().ChangePassword) // 修改密码.
-
-	// 文章相关路由.
-	articles := api.Group("/articles")
-	// 公开接口 - 不需要认证.
-	articles.GET("", newContainer.GetArticleController().List)    // 获取文章列表.
-	articles.GET("/:id", newContainer.GetArticleController().Get) // 获取单个文章.
-
-	// 需要认证的接口.
-	authArticles := articles.Group("")
-	authArticles.Use(middlewares.AuthMiddleware())
-	authArticles.POST("", newContainer.GetArticleController().Create)       // 创建文章.
-	authArticles.PUT("/:id", newContainer.GetArticleController().Update)    // 更新文章.
-	authArticles.DELETE("/:id", newContainer.GetArticleController().Delete) // 删除文章.
+	// 需要认证的用户路由
+	userAuth := users.Group("")
+	userAuth.Use(middlewares.AuthMiddleware())
+	userAuth.PUT("/:id", newContainer.GetUserController().Update)                      // 更新用户信息
+	userAuth.DELETE("/:id", newContainer.GetUserController().Delete)                   // 删除用户
+	userAuth.POST("/change-password", newContainer.GetUserController().ChangePassword) // 修改密码
 }
 
 // RegisterRoutes 注册所有路由.

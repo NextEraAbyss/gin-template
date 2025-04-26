@@ -169,17 +169,6 @@ const (
 	CodeDeleteFailed     ErrorCode = 2115 // 删除失败.
 )
 
-// 文章相关错误码 (3000-3999).
-const (
-	// 文章操作错误 (3000-3099).
-	CodeArticleNotFound         ErrorCode = 3000 // 文章不存在.
-	CodeArticleExists           ErrorCode = 3001 // 文章已存在.
-	CodeArticleCreateFailed     ErrorCode = 3002 // 文章创建失败.
-	CodeArticleUpdateFailed     ErrorCode = 3003 // 文章更新失败.
-	CodeArticleDeleteFailed     ErrorCode = 3004 // 文章删除失败.
-	CodeArticlePermissionDenied ErrorCode = 3005 // 文章权限拒绝.
-)
-
 // 预定义错误.
 var (
 	// 系统级错误.
@@ -240,14 +229,6 @@ var (
 	ErrRegisterFailed   = New(CodeRegisterFailed, "注册失败")
 	ErrUpdateFailed     = New(CodeUpdateFailed, "更新失败")
 	ErrDeleteFailed     = New(CodeDeleteFailed, "删除失败")
-
-	// 文章操作错误.
-	ErrArticleNotFound         = New(CodeArticleNotFound, "文章不存在")
-	ErrArticleExists           = New(CodeArticleExists, "文章已存在")
-	ErrArticleCreateFailed     = New(CodeArticleCreateFailed, "文章创建失败")
-	ErrArticleUpdateFailed     = New(CodeArticleUpdateFailed, "文章更新失败")
-	ErrArticleDeleteFailed     = New(CodeArticleDeleteFailed, "文章删除失败")
-	ErrArticlePermissionDenied = New(CodeArticlePermissionDenied, "没有文章操作权限")
 )
 
 func (e *Error) StatusCode() int {
