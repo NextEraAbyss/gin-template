@@ -9,6 +9,7 @@ import (
 	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/repositories"
 	"gitee.com/NextEraAbyss/gin-template/utils"
+	"gitee.com/NextEraAbyss/gin-template/validation"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +36,7 @@ type UserService interface {
 	Delete(ctx context.Context, id uint) error
 
 	// List 获取用户列表
-	List(ctx context.Context, query *models.UserQueryDTO) ([]models.User, int64, error)
+	List(ctx context.Context, query *validation.UserQueryDTO) ([]models.User, int64, error)
 
 	// GetByUsername 根据用户名获取用户
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
@@ -171,17 +172,19 @@ func (s *userService) GetByEmail(ctx context.Context, email string) (*models.Use
 }
 
 // List 获取用户列表
-func (s *userService) List(ctx context.Context, query *models.UserQueryDTO) ([]models.User, int64, error) {
-	// 设置默认值
-	if query.Page <= 0 {
-		query.Page = 1
+func (s *userService) List(ctx context.Context, query *validation.UserQueryDTO) ([]models.User, int64, error) {
+
+	// 转换为仓库层查询对象
+	repoQuery := &repositories.UserQueryParams{
+		Page:     query.Page,
+		PageSize: query.PageSize,
+		Keyword:  query.Keyword,
+		Status:   query.Status,
+		OrderBy:  query.OrderBy,
+		Order:    query.Order,
 	}
 
-	if query.PageSize <= 0 {
-		query.PageSize = 10
-	}
-
-	users, total, err := s.repo.List(ctx, query)
+	users, total, err := s.repo.List(ctx, repoQuery)
 	if err != nil {
 		return nil, 0, err
 	}

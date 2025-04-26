@@ -8,6 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// UserQueryParams 用户查询参数
+type UserQueryParams struct {
+	Page     int    `json:"page"`     // 页码
+	PageSize int    `json:"pageSize"` // 每页数量
+	Keyword  string `json:"keyword"`  // 搜索关键词
+	Status   int    `json:"status"`   // 状态
+	OrderBy  string `json:"orderBy"`  // 排序字段
+	Order    string `json:"order"`    // 排序方向
+}
+
 // BaseRepository 基础仓库接口，定义通用操作
 type BaseRepository interface {
 	// RepositoryName 获取仓库名称
@@ -31,7 +41,7 @@ type UserRepository interface {
 	Delete(ctx context.Context, id uint) error
 
 	// List 获取用户列表
-	List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error)
+	List(ctx context.Context, query *UserQueryParams) ([]*models.User, int64, error)
 
 	// GetByUsername 根据用户名获取用户
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
@@ -81,7 +91,7 @@ func (r *userRepository) Delete(ctx context.Context, id uint) error {
 }
 
 // List 获取用户列表
-func (r *userRepository) List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error) {
+func (r *userRepository) List(ctx context.Context, query *UserQueryParams) ([]*models.User, int64, error) {
 	var users []*models.User
 	var total int64
 	var order string

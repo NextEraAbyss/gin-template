@@ -24,27 +24,6 @@ func (User) TableName() string {
 	return "users"
 }
 
-// UserLoginRequest 用户登录请求
-type UserLoginRequest struct {
-	Username string `json:"username" binding:"required"` // 用户名
-	Password string `json:"password" binding:"required"` // 密码
-}
-
-// UserRegisterRequest 用户注册请求
-type UserRegisterRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=50"` // 用户名
-	Password string `json:"password" binding:"required,min=6,max=20"` // 密码
-	Email    string `json:"email" binding:"required,email"`           // 邮箱
-	Nickname string `json:"nickname" binding:"required,min=2,max=50"` // 昵称
-}
-
-// UserUpdateRequest 用户信息更新请求
-type UserUpdateRequest struct {
-	Nickname string `json:"nickname" binding:"omitempty,min=2,max=50"` // 昵称
-	Avatar   string `json:"avatar" binding:"omitempty,url"`            // 头像URL
-	Email    string `json:"email" binding:"omitempty,email"`           // 邮箱
-}
-
 // UserResponse 用户信息响应
 type UserResponse struct {
 	ID          uint      `json:"id"`            // 用户ID
@@ -71,31 +50,4 @@ func (u *User) ToResponse() *UserResponse {
 		CreatedAt:   u.CreatedAt,
 		UpdatedAt:   u.UpdatedAt,
 	}
-}
-
-// UserQueryDTO 用户查询参数
-type UserQueryDTO struct {
-	Page     int    `form:"page" json:"page"`         // 页码
-	PageSize int    `form:"pageSize" json:"pageSize"` // 每页数量
-	Keyword  string `form:"keyword" json:"keyword"`   // 搜索关键词
-	Status   int    `form:"status" json:"status"`     // 状态
-	OrderBy  string `form:"orderBy" json:"orderBy"`   // 排序字段
-	Order    string `form:"order" json:"order"`       // 排序方向
-}
-
-// ChangePasswordRequest 修改密码请求
-type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password" binding:"required"` // 旧密码
-	NewPassword string `json:"new_password" binding:"required"` // 新密码
-}
-
-// ResetPasswordRequest 重置密码请求
-type ResetPasswordRequest struct {
-	Email string `json:"email" binding:"required,email"` // 邮箱地址
-}
-
-// UserListResponse 用户列表响应
-type UserListResponse struct {
-	Total int64  `json:"total"` // 总数
-	Items []User `json:"items"` // 用户列表
 }

@@ -1,12 +1,15 @@
 package validation
 
-import "gitee.com/NextEraAbyss/gin-template/models"
+import (
+	"gitee.com/NextEraAbyss/gin-template/models"
+)
 
 // UserQueryDTO 用户查询参数
 type UserQueryDTO struct {
 	Page     int    `form:"page" binding:"omitempty,min=1"`
 	PageSize int    `form:"page_size" binding:"omitempty,min=1,max=100"`
 	Keyword  string `form:"keyword" binding:"omitempty,max=50"`
+	Status   int    `form:"status" binding:"omitempty,oneof=0 1 2"`
 	OrderBy  string `form:"order_by" binding:"omitempty,oneof=id username email created_at updated_at status"`
 	Order    string `form:"order" binding:"omitempty,oneof=asc desc"`
 }
@@ -63,6 +66,20 @@ type UserResponseDTO struct {
 type LoginResponseDTO struct {
 	Token string          `json:"token"`
 	User  UserResponseDTO `json:"user"`
+}
+
+// UserListResponseDTO 用户列表响应
+type UserListResponseDTO struct {
+	Total int64             `json:"total"` // 总数
+	Items []UserResponseDTO `json:"items"` // 用户列表
+}
+
+// RegisterRequestDTO 注册请求
+type RegisterRequestDTO struct {
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
+	Email    string `json:"email" binding:"required,email"`
+	Nickname string `json:"nickname" binding:"required,min=2,max=50"`
 }
 
 // GetDefaultUserQuery 获取默认的用户查询参数

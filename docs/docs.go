@@ -228,7 +228,7 @@ const docTemplate = `{
                     "200": {
                         "description": "用户列表数据，包含总数和分页记录",
                         "schema": {
-                            "$ref": "#/definitions/controllers.UserListResponse"
+                            "$ref": "#/definitions/validation.UserListResponseDTO"
                         }
                     },
                     "400": {
@@ -523,22 +523,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.UserListResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "description": "用户列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/validation.UserResponseDTO"
-                    }
-                },
-                "total": {
-                    "description": "总数",
-                    "type": "integer"
-                }
-            }
-        },
         "utils.Response": {
             "type": "object",
             "properties": {
@@ -615,6 +599,22 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3
+                }
+            }
+        },
+        "validation.UserListResponseDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "用户列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/validation.UserResponseDTO"
+                    }
+                },
+                "total": {
+                    "description": "总数",
+                    "type": "integer"
                 }
             }
         },

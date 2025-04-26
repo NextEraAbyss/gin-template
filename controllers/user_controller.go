@@ -3,18 +3,11 @@ package controllers
 import (
 	"strconv"
 
-	"gitee.com/NextEraAbyss/gin-template/models"
 	"gitee.com/NextEraAbyss/gin-template/services"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 	"gitee.com/NextEraAbyss/gin-template/validation"
 	"github.com/gin-gonic/gin"
 )
-
-// UserListResponse 用户列表响应
-type UserListResponse struct {
-	Total int64                        `json:"total"` // 总数
-	Items []validation.UserResponseDTO `json:"items"` // 用户列表
-}
 
 // UserController 用户控制器
 type UserController struct {
@@ -40,7 +33,7 @@ func NewUserController(userService services.UserService) *UserController {
 // @Param        keyword     query    string  false  "搜索关键词，支持用户名、邮箱和昵称模糊搜索"
 // @Param        order_by    query    string  false  "排序字段，支持id、username、created_at等"  default(id)
 // @Param        order       query    string  false  "排序方向: asc(升序)或desc(降序)"     default(desc)
-// @Success      200         {object}  UserListResponse  "用户列表数据，包含总数和分页记录"
+// @Success      200         {object}  validation.UserListResponseDTO  "用户列表数据，包含总数和分页记录"
 // @Failure      400         {object}  utils.Response           "请求参数错误"
 // @Failure      401         {object}  utils.Response           "未授权，请先登录"
 // @Failure      500         {object}  utils.Response           "服务器内部错误"
@@ -52,31 +45,8 @@ func (ctrl *UserController) List(c *gin.Context) {
 		return
 	}
 
-	// 设置默认值
-	if queryDTO.Page <= 0 {
-		queryDTO.Page = 1
-	}
-	if queryDTO.PageSize <= 0 {
-		queryDTO.PageSize = 10
-	}
-	if queryDTO.OrderBy == "" {
-		queryDTO.OrderBy = "id"
-	}
-	if queryDTO.Order == "" {
-		queryDTO.Order = "desc"
-	}
-
-	// 转换为模型层查询对象
-	query := &models.UserQueryDTO{
-		Page:     queryDTO.Page,
-		PageSize: queryDTO.PageSize,
-		Keyword:  queryDTO.Keyword,
-		OrderBy:  queryDTO.OrderBy,
-		Order:    queryDTO.Order,
-	}
-
 	// 获取用户列表
-	users, total, err := ctrl.userService.List(c.Request.Context(), query)
+	users, total, err := ctrl.userService.List(c.Request.Context(), &queryDTO)
 	if err != nil {
 		utils.ResponseError(c, utils.CodeInternalError, err.Error())
 		return
@@ -89,7 +59,7 @@ func (ctrl *UserController) List(c *gin.Context) {
 	}
 
 	// 返回结果
-	utils.ResponseSuccess(c, UserListResponse{
+	utils.ResponseSuccess(c, validation.UserListResponseDTO{
 		Total: total,
 		Items: items,
 	})
