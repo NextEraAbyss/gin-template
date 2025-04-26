@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/auth/login": {
             "post": {
-                "description": "用户登录接口，返回JWT令牌",
+                "description": "用户登录接口，通过用户名和密码验证身份并返回JWT访问令牌",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,11 +36,11 @@ const docTemplate = `{
                 "tags": [
                     "认证管理"
                 ],
-                "summary": "用户登录",
+                "summary": "用户账号登录",
                 "parameters": [
                     {
-                        "description": "登录信息",
-                        "name": "login",
+                        "description": "登录凭证，包含用户名和密码",
+                        "name": "credentials",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -50,7 +50,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "登录成功，返回访问令牌和用户信息",
                         "schema": {
                             "allOf": [
                                 {
@@ -68,7 +68,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数错误",
+                        "description": "请求参数错误，包括格式不正确或必填字段缺失",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -78,13 +78,31 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
+                    },
+                    "403": {
+                        "description": "账号已被禁用",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "登录尝试次数过多，请稍后再试",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
                     }
                 }
             }
         },
         "/api/v1/auth/register": {
             "post": {
-                "description": "新用户注册接口",
+                "description": "新用户注册接口，提供用户名、密码、邮箱等信息进行账号创建",
                 "consumes": [
                     "application/json"
                 ],
@@ -94,11 +112,11 @@ const docTemplate = `{
                 "tags": [
                     "认证管理"
                 ],
-                "summary": "用户注册",
+                "summary": "用户账号注册",
                 "parameters": [
                     {
-                        "description": "注册信息",
-                        "name": "register",
+                        "description": "用户注册信息，包含用户名、密码、邮箱等",
+                        "name": "userData",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -108,7 +126,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "注册成功，返回用户信息",
                         "schema": {
                             "allOf": [
                                 {
@@ -126,7 +144,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数错误",
+                        "description": "请求参数错误，包括格式不正确或必填字段缺失",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "用户名或邮箱已被占用",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "密码强度不符合要求",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -147,7 +177,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "分页获取用户列表",
+                "description": "支持分页、排序和关键词搜索的用户列表查询接口",
                 "consumes": [
                     "application/json"
                 ],
@@ -157,25 +187,25 @@ const docTemplate = `{
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取用户列表",
+                "summary": "用户列表查询",
                 "parameters": [
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "页码，默认为1",
+                        "description": "页码，从1开始计数",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "每页数量，默认为10",
+                        "description": "每页记录数，默认10条",
                         "name": "page_size",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "搜索关键词，支持用户名、邮箱和昵称搜索",
+                        "description": "搜索关键词，支持用户名、邮箱和昵称模糊搜索",
                         "name": "keyword",
                         "in": "query"
                     },
@@ -189,20 +219,26 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "desc",
-                        "description": "排序方向，asc或desc",
+                        "description": "排序方向: asc(升序)或desc(降序)",
                         "name": "order",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户列表获取成功",
+                        "description": "用户列表数据，包含总数和分页记录",
                         "schema": {
                             "$ref": "#/definitions/models.UserListResponse"
                         }
                     },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
                     "401": {
-                        "description": "未授权",
+                        "description": "未授权，请先登录",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -223,7 +259,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "修改当前登录用户的密码",
+                "description": "修改当前登录用户的密码，需要提供旧密码和新密码",
                 "consumes": [
                     "application/json"
                 ],
@@ -233,11 +269,11 @@ const docTemplate = `{
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "修改密码",
+                "summary": "修改用户密码",
                 "parameters": [
                     {
-                        "description": "密码信息",
-                        "name": "passwordForm",
+                        "description": "密码修改数据，包含旧密码和新密码",
+                        "name": "passwordData",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -253,13 +289,25 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "参数错误",
+                        "description": "请求参数错误",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
                     },
                     "401": {
-                        "description": "未授权",
+                        "description": "未授权，请先登录",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "旧密码验证失败",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "422": {
+                        "description": "新密码格式不符合要求",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -280,7 +328,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "根据用户ID获取用户详细信息",
+                "description": "根据用户ID获取用户的详细资料信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -290,11 +338,11 @@ const docTemplate = `{
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取用户详情",
+                "summary": "获取单个用户信息",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "用户ID",
+                        "description": "用户ID (必填)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -302,13 +350,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户详情获取成功",
+                        "description": "用户详细信息",
                         "schema": {
                             "$ref": "#/definitions/models.UserResponse"
                         }
                     },
+                    "400": {
+                        "description": "用户ID格式错误",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
                     "401": {
-                        "description": "未授权",
+                        "description": "未授权，请先登录",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -333,7 +387,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "更新指定用户的信息",
+                "description": "根据用户ID更新用户资料，支持部分字段更新",
                 "consumes": [
                     "application/json"
                 ],
@@ -347,36 +401,42 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "用户ID",
+                        "description": "用户ID (必填)",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "用户信息",
+                        "description": "用户信息更新内容",
                         "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/validation.UserUpdateDTO"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户信息更新成功",
+                        "description": "更新后的用户信息",
                         "schema": {
                             "$ref": "#/definitions/models.UserResponse"
                         }
                     },
                     "400": {
-                        "description": "参数错误",
+                        "description": "请求参数错误",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
                     },
                     "401": {
-                        "description": "未授权",
+                        "description": "未授权，请先登录",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "无权限操作此用户",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -401,7 +461,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "删除指定用户",
+                "description": "根据用户ID删除指定用户记录",
                 "consumes": [
                     "application/json"
                 ],
@@ -415,7 +475,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "用户ID",
+                        "description": "用户ID (必填)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -423,13 +483,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户删除成功",
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "用户ID格式错误",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
                     },
                     "401": {
-                        "description": "未授权",
+                        "description": "未授权，请先登录",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "无权删除此用户",
                         "schema": {
                             "$ref": "#/definitions/utils.Response"
                         }
@@ -642,6 +714,37 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "validation.UserUpdateDTO": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "status": {
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1,
+                        2
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
                 }
             }
         }

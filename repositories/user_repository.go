@@ -9,14 +9,67 @@ import (
 )
 
 // UserRepository 用户仓库接口
-// 定义了用户相关的数据库操作
+// 提供用户数据的持久化操作，包括增删改查和特定条件查询
 type UserRepository interface {
+	// Create 创建用户
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - user: 用户实体，包含需要存储的用户数据
+	// 返回：
+	// - error: 数据库操作错误，如唯一索引冲突等
 	Create(ctx context.Context, user *models.User) error
+
+	// GetByID 根据ID获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - id: 用户ID，数据库主键
+	// 返回：
+	// - *models.User: 查询到的用户实体，若不存在则为nil
+	// - error: 数据库操作错误，如记录不存在等
 	GetByID(ctx context.Context, id uint) (*models.User, error)
+
+	// Update 更新用户信息
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - user: 用户实体，包含需要更新的字段
+	// 返回：
+	// - error: 数据库操作错误，如记录不存在、字段验证失败等
 	Update(ctx context.Context, user *models.User) error
+
+	// Delete 删除用户
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - id: 用户ID，数据库主键
+	// 返回：
+	// - error: 数据库操作错误，如记录不存在等
 	Delete(ctx context.Context, id uint) error
+
+	// List 获取用户列表
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - query: 查询参数，包含分页、排序和筛选条件
+	// 返回：
+	// - []*models.User: 用户列表
+	// - int64: 符合条件的总记录数（不考虑分页）
+	// - error: 数据库操作错误
 	List(ctx context.Context, query *models.UserQueryDTO) ([]*models.User, int64, error)
+
+	// GetByUsername 根据用户名获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - username: 用户名，唯一标识
+	// 返回：
+	// - *models.User: 查询到的用户实体，若不存在则为nil
+	// - error: 数据库操作错误，如记录不存在等
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
+
+	// GetByEmail 根据邮箱获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制数据库操作的超时和取消
+	// - email: 邮箱地址，唯一标识
+	// 返回：
+	// - *models.User: 查询到的用户实体，若不存在则为nil
+	// - error: 数据库操作错误，如记录不存在等
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 }
 

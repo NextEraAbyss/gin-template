@@ -13,38 +13,105 @@ import (
 )
 
 // UserService 用户服务接口
+// 提供用户相关的业务逻辑处理，包括用户注册、登录、信息管理等功能
 type UserService interface {
 	// Create 创建新用户
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - user: 用户信息，包含用户名、密码、邮箱等基本信息
+	// 返回：
+	// - error: 创建过程中的错误，如用户已存在、密码格式不正确等
 	Create(ctx context.Context, user *models.User) error
 
 	// GetByID 根据ID获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - id: 用户唯一标识
+	// 返回：
+	// - *models.User: 用户信息
+	// - error: 查询过程中的错误，如用户不存在等
 	GetByID(ctx context.Context, id uint) (*models.User, error)
 
 	// Update 更新用户信息
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - user: 用户信息，包含需要更新的字段
+	// 返回：
+	// - error: 更新过程中的错误，如用户不存在等
 	Update(ctx context.Context, user *models.User) error
 
 	// Delete 删除用户
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - id: 用户唯一标识
+	// 返回：
+	// - error: 删除过程中的错误，如用户不存在等
 	Delete(ctx context.Context, id uint) error
 
 	// List 获取用户列表
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - query: 查询条件，包含分页、排序和过滤信息
+	// 返回：
+	// - []models.User: 用户列表
+	// - int64: 总记录数
+	// - error: 查询过程中的错误
 	List(ctx context.Context, query *models.UserQueryDTO) ([]models.User, int64, error)
 
 	// GetByUsername 根据用户名获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - username: 用户名
+	// 返回：
+	// - *models.User: 用户信息
+	// - error: 查询过程中的错误，如用户不存在等
 	GetByUsername(ctx context.Context, username string) (*models.User, error)
 
 	// GetByEmail 根据邮箱获取用户
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - email: 邮箱地址
+	// 返回：
+	// - *models.User: 用户信息
+	// - error: 查询过程中的错误，如用户不存在等
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 
 	// ChangePassword 修改密码
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - userID: 用户唯一标识
+	// - oldPassword: 旧密码，用于验证用户身份
+	// - newPassword: 新密码，需要符合系统密码强度要求
+	// 返回：
+	// - error: 修改过程中的错误，如旧密码错误、新密码格式不正确等
 	ChangePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
 
 	// ResetPassword 重置密码
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - email: 用户邮箱，用于找回账号
+	// 返回：
+	// - error: 重置过程中的错误，如邮箱不存在等
+	// 说明：重置后的密码会通过邮件发送给用户
 	ResetPassword(ctx context.Context, email string) error
 
 	// Login 用户登录
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - username: 用户名
+	// - password: 密码
+	// 返回：
+	// - string: JWT访问令牌
+	// - *models.User: 用户信息
+	// - error: 登录过程中的错误，如用户名或密码错误等
 	Login(ctx context.Context, username, password string) (string, *models.User, error)
 
 	// Register 用户注册
+	// 参数：
+	// - ctx: 上下文，用于控制请求的生命周期
+	// - user: 用户信息，包含用户名、密码、邮箱等基本信息
+	// 返回：
+	// - error: 注册过程中的错误，如用户已存在、密码格式不正确等
 	Register(ctx context.Context, user *models.User) error
 }
 
