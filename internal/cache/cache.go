@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"gitee.com/NextEraAbyss/gin-template/internal/redis"
@@ -46,7 +47,7 @@ func NewRedisCacheWithClient(client *redisClient.Client) Cache {
 func (c *RedisCache) Get(ctx context.Context, key string, value interface{}) error {
 	data, err := c.client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redisClient.Nil {
+		if errors.Is(err, redisClient.Nil) {
 			return nil
 		}
 

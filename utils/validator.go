@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -34,7 +35,7 @@ func init() {
 		zhTrans := zh.New()
 		uni := ut.New(zhTrans, zhTrans)
 		trans, _ = uni.GetTranslator("zh")
-		zhtranslations.RegisterDefaultTranslations(v, trans)
+		_ = zhtranslations.RegisterDefaultTranslations(v, trans)
 
 		// 注册自定义验证器
 		registerCustomValidators(v)
@@ -82,7 +83,8 @@ func BindAndValidate(c *gin.Context, obj interface{}) bool {
 
 // processValidationError 处理验证错误
 func processValidationError(c *gin.Context, err error) {
-	if validationErrs, ok := err.(validator.ValidationErrors); ok {
+	var validationErrs validator.ValidationErrors
+	if errors.As(err, &validationErrs) {
 		// 翻译错误信息
 		errs := make([]string, 0, len(validationErrs))
 		for _, e := range validationErrs {

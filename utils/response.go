@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -71,7 +72,8 @@ func WrapAppResponseError(err error, code ErrorCode, message string) *AppRespons
 	}
 
 	// 如果已经是响应错误，则更新信息
-	if customErr, ok := err.(*AppResponseError); ok {
+	var customErr *AppResponseError
+	if errors.As(err, &customErr) {
 		customErr.Code = code
 		customErr.Message = message
 		customErr.HTTPCode = GetHTTPStatusCode(code)
