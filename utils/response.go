@@ -88,7 +88,7 @@ func WrapAppResponseError(err error, code ErrorCode, message string) *AppRespons
 	}
 }
 
-// 将AppResponseError转换为Response
+// ToResponse 将AppResponseError转换为Response
 func (e *AppResponseError) ToResponse() Response {
 	return Response{
 		Code:    int(e.Code),
@@ -107,7 +107,7 @@ const (
 	CodeInternalError ErrorCode = 1005 // 内部错误
 	CodeServerError   ErrorCode = 1006 // 服务器错误
 
-	// 用户相关错误 (2000-2999)
+	// CodeUserNotFound 用户相关错误 (2000-2999)
 	CodeUserNotFound  ErrorCode = 2001 // 用户不存在
 	CodeUserExists    ErrorCode = 2002 // 用户已存在
 	CodePasswordError ErrorCode = 2003 // 密码错误
@@ -115,25 +115,25 @@ const (
 	CodeTokenInvalid  ErrorCode = 2005 // Token无效
 	CodeUserDisabled  ErrorCode = 2006 // 用户已禁用
 
-	// 评论相关错误 (4000-4999)
+	// CodeCommentNotFound 评论相关错误 (4000-4999)
 	CodeCommentNotFound  ErrorCode = 4001 // 评论不存在
 	CodeCommentForbidden ErrorCode = 4002 // 无权操作评论
 )
 
 // 预定义错误响应
 var (
-	// 系统级错误
+	// ErrUnknown 系统级错误
 	ErrUnknown       = NewAppResponseError(CodeInternalError, "未知错误")
 	ErrInternal      = NewAppResponseError(CodeInternalError, "系统内部错误")
 	ErrInvalidParams = NewAppResponseError(CodeInvalidParams, "无效的参数")
 
-	// 用户认证错误
+	// ErrUnauthorized 用户认证错误
 	ErrUnauthorized = NewAppResponseError(CodeUnauthorized, "未授权访问")
 	ErrForbidden    = NewAppResponseError(CodeForbidden, "禁止访问")
 	ErrTokenExpired = NewAppResponseError(CodeTokenExpired, "Token已过期")
 	ErrTokenInvalid = NewAppResponseError(CodeTokenInvalid, "Token无效")
 
-	// 用户操作错误
+	// ErrUserNotFound 用户操作错误
 	ErrUserNotFound  = NewAppResponseError(CodeUserNotFound, "用户不存在")
 	ErrUserDisabled  = NewAppResponseError(CodeUserDisabled, "用户已被禁用")
 	ErrUserExists    = NewAppResponseError(CodeUserExists, "用户已存在")

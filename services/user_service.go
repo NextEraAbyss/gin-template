@@ -15,7 +15,7 @@ import (
 
 // BaseService 基础服务接口，定义通用的服务方法
 type BaseService interface {
-	// 获取服务名称
+	// ServiceName 获取服务名称
 	ServiceName() string
 }
 

@@ -55,7 +55,7 @@ func ValidatePasswordStrength(password string) error {
 	return nil
 }
 
-// 生成随机盐值
+// GenerateSalt 生成随机盐值
 func GenerateSalt() (string, error) {
 	// 生成32字节的随机数
 	b := make([]byte, 32)
