@@ -16,6 +16,87 @@ type Response struct {
 // ErrorCode 错误码类型
 type ErrorCode int
 
+// AppResponseError 错误响应对象
+type AppResponseError struct {
+	Code     ErrorCode   `json:"code"`    // 错误码
+	Message  string      `json:"message"` // 错误信息
+	Details  string      `json:"details"` // 详细信息，可选
+	Data     interface{} `json:"data"`    // 数据，可选
+	HTTPCode int         `json:"-"`       // HTTP状态码
+	Err      error       `json:"-"`       // 原始错误
+}
+
+// Error 实现error接口
+func (e *AppResponseError) Error() string {
+	if e == nil {
+		return ""
+	}
+
+	if e.Message != "" {
+		return e.Message
+	}
+
+	if customErr, ok := e.Err.(*AppResponseError); ok {
+		return customErr.Message
+	}
+
+	return e.Err.Error()
+}
+
+// NewAppResponseError 创建新的错误响应
+func NewAppResponseError(code ErrorCode, message string) *AppResponseError {
+	return &AppResponseError{
+		Code:     code,
+		Message:  message,
+		HTTPCode: GetHTTPStatusCode(code),
+	}
+}
+
+// WithDetails 添加详细错误信息
+func (e *AppResponseError) WithDetails(details string) *AppResponseError {
+	e.Details = details
+	return e
+}
+
+// WithData 添加错误相关数据
+func (e *AppResponseError) WithData(data interface{}) *AppResponseError {
+	e.Data = data
+	return e
+}
+
+// WrapAppResponseError 包装已有错误为响应错误
+func WrapAppResponseError(err error, code ErrorCode, message string) *AppResponseError {
+	if err == nil {
+		return nil
+	}
+
+	// 如果已经是响应错误，则更新信息
+	if customErr, ok := err.(*AppResponseError); ok {
+		customErr.Code = code
+		customErr.Message = message
+		customErr.HTTPCode = GetHTTPStatusCode(code)
+		return customErr
+	}
+
+	// 否则创建新的响应错误
+	return &AppResponseError{
+		Code:     code,
+		Message:  message,
+		Details:  err.Error(),
+		HTTPCode: GetHTTPStatusCode(code),
+		Err:      err,
+	}
+}
+
+// 将AppResponseError转换为Response
+func (e *AppResponseError) ToResponse() Response {
+	return Response{
+		Code:    int(e.Code),
+		Message: e.Message,
+		Data:    e.Data,
+	}
+}
+
 // 系统级状态码
 const (
 	CodeSuccess       ErrorCode = 0    // 成功
@@ -37,6 +118,26 @@ const (
 	// 评论相关错误 (4000-4999)
 	CodeCommentNotFound  ErrorCode = 4001 // 评论不存在
 	CodeCommentForbidden ErrorCode = 4002 // 无权操作评论
+)
+
+// 预定义错误响应
+var (
+	// 系统级错误
+	ErrUnknown       = NewAppResponseError(CodeInternalError, "未知错误")
+	ErrInternal      = NewAppResponseError(CodeInternalError, "系统内部错误")
+	ErrInvalidParams = NewAppResponseError(CodeInvalidParams, "无效的参数")
+
+	// 用户认证错误
+	ErrUnauthorized = NewAppResponseError(CodeUnauthorized, "未授权访问")
+	ErrForbidden    = NewAppResponseError(CodeForbidden, "禁止访问")
+	ErrTokenExpired = NewAppResponseError(CodeTokenExpired, "Token已过期")
+	ErrTokenInvalid = NewAppResponseError(CodeTokenInvalid, "Token无效")
+
+	// 用户操作错误
+	ErrUserNotFound  = NewAppResponseError(CodeUserNotFound, "用户不存在")
+	ErrUserDisabled  = NewAppResponseError(CodeUserDisabled, "用户已被禁用")
+	ErrUserExists    = NewAppResponseError(CodeUserExists, "用户已存在")
+	ErrPasswordError = NewAppResponseError(CodePasswordError, "密码错误")
 )
 
 // CodeMessages 状态码对应的消息
@@ -102,6 +203,11 @@ func ResponseWithMessage(c *gin.Context, message string, data interface{}) {
 		Message: message,
 		Data:    data,
 	})
+}
+
+// ResponseWithAppError 响应应用错误对象
+func ResponseWithAppError(c *gin.Context, respError *AppResponseError) {
+	c.JSON(respError.HTTPCode, respError.ToResponse())
 }
 
 // ResponseError 错误响应 - 返回错误码和消息

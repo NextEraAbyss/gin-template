@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"gitee.com/NextEraAbyss/gin-template/internal/errors"
 	"gitee.com/NextEraAbyss/gin-template/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -15,8 +14,8 @@ func ErrorHandler() gin.HandlerFunc {
 		// 检查是否有错误
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
-			if customErr, ok := err.(*errors.Error); ok {
-				utils.ResponseError(c, utils.ErrorCode(customErr.Code), customErr.Message)
+			if customErr, ok := err.(*utils.AppResponseError); ok {
+				utils.ResponseWithAppError(c, customErr)
 				return
 			}
 
