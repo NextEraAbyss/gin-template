@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/locales/zh"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	zh_translations "github.com/go-playground/validator/v10/translations/zh"
+	zhtranslations "github.com/go-playground/validator/v10/translations/zh"
 )
 
 var (
@@ -34,7 +34,7 @@ func init() {
 		zhTrans := zh.New()
 		uni := ut.New(zhTrans, zhTrans)
 		trans, _ = uni.GetTranslator("zh")
-		zh_translations.RegisterDefaultTranslations(v, trans)
+		zhtranslations.RegisterDefaultTranslations(v, trans)
 
 		// 注册自定义验证器
 		registerCustomValidators(v)
