@@ -58,8 +58,11 @@ type UserResponseDTO struct {
 
 // UserListResponseDTO 用户列表响应
 type UserListResponseDTO struct {
-	Total int64             `json:"total"` // 总数
-	Items []UserResponseDTO `json:"items"` // 用户列表
+	Total    int64             `json:"total"`     // 总数
+	Items    []UserResponseDTO `json:"items"`     // 用户列表
+	Page     int               `json:"page"`      // 当前页码
+	PageSize int               `json:"page_size"` // 每页数量
+	Pages    int               `json:"pages"`     // 总页数
 }
 
 // GetDefaultUserQuery 获取默认的用户查询参数

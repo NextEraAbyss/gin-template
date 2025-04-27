@@ -34,15 +34,20 @@ func NewUserController(userService services.UserService) *UserController {
 // @Param        order_by    query    string  false  "排序字段，支持id、username、created_at等"  default(id)
 // @Param        order       query    string  false  "排序方向: asc(升序)或desc(降序)"     default(desc)
 // @Success      200         {object}  validation.UserListResponseDTO  "用户列表数据，包含总数和分页记录"
-// @Failure      400         {object}  utils.Response           "请求参数错误"
-// @Failure      401         {object}  utils.Response           "未授权，请先登录"
-// @Failure      500         {object}  utils.Response           "服务器内部错误"
 // @Router       /api/v1/users [get]
 func (ctrl *UserController) List(c *gin.Context) {
 	// 验证查询参数
 	var queryDTO validation.UserQueryDTO
 	if !utils.ValidateQuery(c, &queryDTO) {
 		return
+	}
+
+	// 设置默认值
+	if queryDTO.Page <= 0 {
+		queryDTO.Page = 1
+	}
+	if queryDTO.PageSize <= 0 {
+		queryDTO.PageSize = 10
 	}
 
 	// 获取用户列表
@@ -58,10 +63,19 @@ func (ctrl *UserController) List(c *gin.Context) {
 		items = append(items, validation.FromUser(user))
 	}
 
+	// 计算总页数
+	pages := int(total) / queryDTO.PageSize
+	if int(total)%queryDTO.PageSize > 0 {
+		pages++
+	}
+
 	// 返回结果
 	utils.ResponseSuccess(c, validation.UserListResponseDTO{
-		Total: total,
-		Items: items,
+		Total:    total,
+		Items:    items,
+		Page:     queryDTO.Page,
+		PageSize: queryDTO.PageSize,
+		Pages:    pages,
 	})
 }
 
@@ -74,10 +88,6 @@ func (ctrl *UserController) List(c *gin.Context) {
 // @Security     Bearer
 // @Param        id          path     int  true   "用户ID (必填)"
 // @Success      200         {object}  validation.UserResponseDTO  "用户详细信息"
-// @Failure      400         {object}  utils.Response       "用户ID格式错误"
-// @Failure      401         {object}  utils.Response       "未授权，请先登录"
-// @Failure      404         {object}  utils.Response       "用户不存在"
-// @Failure      500         {object}  utils.Response       "服务器内部错误"
 // @Router       /api/v1/users/{id} [get]
 func (ctrl *UserController) Get(c *gin.Context) {
 	// 解析用户ID
@@ -108,11 +118,6 @@ func (ctrl *UserController) Get(c *gin.Context) {
 // @Param        id          path     int           true   "用户ID (必填)"
 // @Param        user        body     validation.UserUpdateDTO  true   "用户信息更新内容"
 // @Success      200         {object}  validation.UserResponseDTO       "更新后的用户信息"
-// @Failure      400         {object}  utils.Response            "请求参数错误"
-// @Failure      401         {object}  utils.Response            "未授权，请先登录"
-// @Failure      403         {object}  utils.Response            "无权限操作此用户"
-// @Failure      404         {object}  utils.Response            "用户不存在"
-// @Failure      500         {object}  utils.Response            "服务器内部错误"
 // @Router       /api/v1/users/{id} [put]
 func (ctrl *UserController) Update(c *gin.Context) {
 	// 解析用户ID
@@ -158,11 +163,6 @@ func (ctrl *UserController) Update(c *gin.Context) {
 // @Security     Bearer
 // @Param        id          path     int        true   "用户ID (必填)"
 // @Success      200         {object}  utils.Response   "删除成功"
-// @Failure      400         {object}  utils.Response   "用户ID格式错误"
-// @Failure      401         {object}  utils.Response   "未授权，请先登录"
-// @Failure      403         {object}  utils.Response   "无权删除此用户"
-// @Failure      404         {object}  utils.Response   "用户不存在"
-// @Failure      500         {object}  utils.Response   "服务器内部错误"
 // @Router       /api/v1/users/{id} [delete]
 func (ctrl *UserController) Delete(c *gin.Context) {
 	// 解析用户ID
@@ -191,11 +191,6 @@ func (ctrl *UserController) Delete(c *gin.Context) {
 // @Security     Bearer
 // @Param        passwordData  body     validation.UserChangePasswordDTO  true   "密码修改数据，包含旧密码和新密码"
 // @Success      200           {object}  utils.Response               "密码修改成功"
-// @Failure      400           {object}  utils.Response               "请求参数错误"
-// @Failure      401           {object}  utils.Response               "未授权，请先登录"
-// @Failure      403           {object}  utils.Response               "旧密码验证失败"
-// @Failure      422           {object}  utils.Response               "新密码格式不符合要求"
-// @Failure      500           {object}  utils.Response               "服务器内部错误"
 // @Router       /api/v1/users/change-password [post]
 func (ctrl *UserController) ChangePassword(c *gin.Context) {
 	// 验证请求参数
