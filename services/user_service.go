@@ -49,12 +49,6 @@ type UserService interface {
 
 	// ResetPassword 重置密码
 	ResetPassword(ctx context.Context, email string) error
-
-	// Login 用户登录
-	Login(ctx context.Context, username, password string) (string, *models.User, error)
-
-	// Register 用户注册
-	Register(ctx context.Context, user *models.User) error
 }
 
 // userService 用户服务实现
@@ -108,12 +102,6 @@ func (s *userService) Create(ctx context.Context, user *models.User) error {
 	user.LastLoginAt = time.Now()
 
 	return s.repo.Create(ctx, user)
-}
-
-// Register 注册用户 - 专门用于注册流程
-func (s *userService) Register(ctx context.Context, user *models.User) error {
-	// 复用Create方法的逻辑
-	return s.Create(ctx, user)
 }
 
 // GetByID 根据ID获取用户
@@ -260,35 +248,4 @@ func (s *userService) ResetPassword(ctx context.Context, email string) error {
 
 	// TODO: 发送邮件通知用户新密码
 	return nil
-}
-
-// Login 用户登录
-func (s *userService) Login(ctx context.Context, username, password string) (string, *models.User, error) {
-	// 获取用户信息
-	user, err := s.repo.GetByUsername(ctx, username)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil, errors.New("用户不存在")
-		}
-		return "", nil, err
-	}
-
-	// 验证密码
-	if !utils.CheckPassword(password, user.Password) {
-		return "", nil, errors.New("密码错误")
-	}
-
-	// 更新最后登录时间
-	user.LastLoginAt = time.Now()
-	if err := s.repo.Update(ctx, user); err != nil {
-		return "", nil, err
-	}
-
-	// 生成 token
-	token, err := utils.GenerateToken(user.ID, user.Username)
-	if err != nil {
-		return "", nil, err
-	}
-
-	return token, user, nil
 }

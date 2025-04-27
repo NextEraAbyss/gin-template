@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"gitee.com/NextEraAbyss/gin-template/utils"
@@ -32,8 +33,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// 从Subject中提取用户ID
+		userID, err := strconv.ParseUint(claims.Subject, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token subject"})
+			c.Abort()
+			return
+		}
+
 		// 将解析的claims保存到上下文中
-		c.Set("userID", claims.UserID)
+		c.Set("userID", uint(userID))
+		c.Set("username", claims.Issuer) // 使用Issuer存储username
 		c.Next()
 	}
 }

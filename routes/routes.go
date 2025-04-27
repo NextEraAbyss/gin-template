@@ -44,11 +44,6 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, redisClient *redis.Client) {
 	// API路由组
 	api := router.Group("/api/v1")
 
-	// 认证相关路由 - 保留登录和注册
-	auth := api.Group("/auth")
-	auth.POST("/login", newContainer.GetAuthController().Login)       // 登录
-	auth.POST("/register", newContainer.GetAuthController().Register) // 注册
-
 	// 用户相关路由
 	users := api.Group("/users")
 	users.GET("", newContainer.GetUserController().List)    // 获取用户列表

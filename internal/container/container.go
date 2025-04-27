@@ -30,7 +30,6 @@ type Services struct {
 // Controllers 控制器层依赖
 type Controllers struct {
 	User *controllers.UserController
-	Auth *controllers.AuthController
 }
 
 // NewContainer 创建新的容器实例
@@ -59,16 +58,10 @@ func (c *Container) InitServices() {
 func (c *Container) InitControllers() {
 	c.Controllers = &Controllers{
 		User: controllers.NewUserController(c.Services.User),
-		Auth: controllers.NewAuthController(c.Services.User),
 	}
 }
 
 // GetUserController 获取用户控制器
 func (c *Container) GetUserController() *controllers.UserController {
 	return c.Controllers.User
-}
-
-// GetAuthController 获取认证控制器
-func (c *Container) GetAuthController() *controllers.AuthController {
-	return c.Controllers.Auth
 }

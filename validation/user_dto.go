@@ -32,12 +32,6 @@ type UserUpdateDTO struct {
 	Status   int    `json:"status" binding:"omitempty,oneof=0 1 2"`
 }
 
-// UserLoginDTO 用户登录参数
-type UserLoginDTO struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
 // UserChangePasswordDTO 修改密码参数
 type UserChangePasswordDTO struct {
 	OldPassword string `json:"old_password" binding:"required"`
@@ -62,24 +56,10 @@ type UserResponseDTO struct {
 	LastLoginAt string `json:"last_login_at"`
 }
 
-// LoginResponseDTO 登录响应
-type LoginResponseDTO struct {
-	Token string          `json:"token"`
-	User  UserResponseDTO `json:"user"`
-}
-
 // UserListResponseDTO 用户列表响应
 type UserListResponseDTO struct {
 	Total int64             `json:"total"` // 总数
 	Items []UserResponseDTO `json:"items"` // 用户列表
-}
-
-// RegisterRequestDTO 注册请求
-type RegisterRequestDTO struct {
-	Username string `json:"username" binding:"required,min=3,max=32"`
-	Password string `json:"password" binding:"required,min=6,max=32"`
-	Email    string `json:"email" binding:"required,email"`
-	Nickname string `json:"nickname" binding:"required,min=2,max=50"`
 }
 
 // GetDefaultUserQuery 获取默认的用户查询参数
