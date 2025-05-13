@@ -1,35 +1,51 @@
-# Gin API 项目模板
+# Gin 用户API极简模板
 
-基于Go语言Gin框架的API项目模板，采用三层架构设计，提供安全、高性能的API开发框架。
+基于Go语言Gin框架的极简API项目模板，仅保留用户相关功能，采用三层架构设计，提供安全、高性能的API开发基础。
 
 ## 核心特性
 
 - **分层架构**：标准三层架构(Controllers, Services, Repositories)
-- **安全性**：JWT认证、密码强度验证、请求速率限制、CORS配置
+- **安全性**：JWT认证、请求速率限制、CORS配置、安全HTTP头
 - **高性能**：Redis缓存、数据库连接池优化
 - **开发友好**：统一日志、标准API响应格式、结构化错误处理
 - **代码质量**：符合Go最佳实践、自动化测试支持
 
-## 项目结构
+## 项目结构（精简版）
 
 ```
 .
-├── config/           # 配置管理
-├── controllers/      # 控制器 (表示层)
-├── middlewares/      # 中间件
-├── models/           # 数据模型
-├── repositories/     # 数据访问层
-├── routes/           # 路由设置
-├── services/         # 业务逻辑层
-├── utils/            # 工具函数
-├── validation/       # 请求验证
-├── internal/         # 内部包
-│   ├── container/    # 依赖注入容器
-│   ├── mysql/        # MySQL连接管理
-│   └── redis/        # Redis缓存管理
+├── controllers/      # 用户控制器
+├── middlewares/      # 全局中间件
+├── models/           # 用户数据模型
+├── repositories/     # 用户数据访问层
+├── routes/           # 路由设置（仅用户相关）
+├── services/         # 用户业务逻辑层
+├── internal/         # 依赖注入、数据库、缓存
 ├── main.go           # 应用入口
-└── logs/             # 应用日志目录
+└── README.md         # 项目说明
 ```
+
+## 全局中间件
+
+- 请求ID追踪
+- 日志记录
+- 错误恢复
+- 统一错误处理
+- CORS跨域
+- 安全HTTP头
+- 速率限制（默认每分钟1000次）
+
+## 用户API路由
+
+| 方法   | 路径                        | 说明         | 认证 |
+| ------ | --------------------------- | ------------ | ---- |
+| GET    | /api/v1/users               | 获取用户列表 | 否   |
+| GET    | /api/v1/users/:id           | 获取单个用户 | 否   |
+| PUT    | /api/v1/users/:id           | 更新用户信息 | 是   |
+| DELETE | /api/v1/users/:id           | 删除用户     | 是   |
+| POST   | /api/v1/users/change-password | 修改密码   | 是   |
+
+> 需要认证的接口需携带有效JWT Token。
 
 ## API响应格式
 
@@ -58,6 +74,10 @@ CodeUserExists    = 2002 // 用户已存在
 CodePasswordError = 2003 // 密码错误
 CodeTokenExpired  = 2004 // Token过期
 ```
+
+## Swagger文档
+
+访问 [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html) 查看API接口文档。
 
 ## 快速开始
 
