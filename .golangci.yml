@@ -1,7 +1,6 @@
 linters:
   enable:
     - gofmt
-    - golint
     - govet
     - errcheck
     - staticcheck
@@ -17,17 +16,15 @@ linters:
     - goconst
     - gocritic
     - godot
-    - gomnd
+    - mnd
     - goprintffuncname
-    - gosec
     - nakedret
     - prealloc
-    - scopelint
     - stylecheck
     - unconvert
     - unparam
-    - varcheck
     - wsl
+    - exportloopref
 
 linters-settings:
   gocyclo:
@@ -47,8 +44,8 @@ linters-settings:
       - performance
       - experimental
   godot:
-    check-all: true
-  gomnd:
+    scope: all
+  mnd:
     checks:
       - argument
       - assign
@@ -95,15 +92,15 @@ linters-settings:
     force-case-trailing-whitespace: true
 
 run:
-  deadline: 5m
+  timeout: 5m
   tests: true
-  skip-dirs:
-    - vendor
-    - third_party
-  skip-files:
-    - ".*_test\\.go$"
 
 issues:
+  exclude-dirs:
+    - vendor
+    - third_party
+  exclude-files:
+    - ".*_test\\.go$"
   exclude-rules:
     - path: _test\.go
       linters:
@@ -120,11 +117,13 @@ issues:
     - path: utils/jwt.go
       linters:
         - gosec
+  uniq-by-line: true
 
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
+      path: stdout
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   path-prefix: ""
   sort-results: true 

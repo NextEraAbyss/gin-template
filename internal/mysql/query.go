@@ -225,20 +225,6 @@ func (qb *QueryBuilder) getCacheKey(operation string, args ...interface{}) strin
 	return fmt.Sprintf("query:%s:%v", operation, args)
 }
 
-// setCache 设置缓存
-func (qb *QueryBuilder) setCache(key string, value interface{}) error {
-	if qb.redisClient == nil {
-		return nil
-	}
-
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
-	return qb.redisClient.Set(qb.context, key, data, qb.cacheExpiration).Err()
-}
-
 // getCache 获取缓存
 func (qb *QueryBuilder) getCache(key string, dest interface{}) error {
 	if qb.redisClient == nil {
@@ -251,6 +237,20 @@ func (qb *QueryBuilder) getCache(key string, dest interface{}) error {
 	}
 
 	return json.Unmarshal(data, dest)
+}
+
+// setCache 设置缓存
+func (qb *QueryBuilder) setCache(key string, value interface{}) error {
+	if qb.redisClient == nil {
+		return nil
+	}
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	return qb.redisClient.Set(qb.context, key, data, qb.cacheExpiration).Err()
 }
 
 // deleteCache 删除缓存
