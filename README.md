@@ -86,6 +86,49 @@ CodeTokenExpired  = 2004 // Token过期
 - Go 1.16+
 - MySQL 5.7+
 - Redis
+- Make 工具（Windows用户需要单独安装）
+
+### Windows 环境配置
+
+#### 安装 Make 工具
+
+Windows 系统默认不包含 Make 工具，推荐以下安装方式：
+
+**方式一：通过 Chocolatey 安装（推荐）**
+
+1. 安装 Chocolatey（以管理员身份运行 PowerShell）：
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+
+2. 安装 Make：
+```powershell
+choco install make
+```
+
+**方式二：通过 Scoop 安装**
+
+1. 安装 Scoop：
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+```
+
+2. 安装 Make：
+```powershell
+scoop install make
+```
+
+**方式三：下载预编译版本**
+
+从 [GnuWin32](http://gnuwin32.sourceforge.net/packages/make.htm) 下载并安装，然后将安装路径添加到系统 PATH 环境变量中。
+
+#### 验证安装
+
+安装完成后，重新打开命令行窗口，验证安装：
+```bash
+make --version
+```
 
 ### 本地开发
 
@@ -101,7 +144,25 @@ go mod download
 
 3. 创建.env文件 (参考示例配置)
 
-4. 运行项目
+4. 使用 Make 命令运行项目
+```bash
+# 运行项目
+make run
+
+# 构建项目
+make build
+
+# 运行测试
+make test
+
+# 代码检查
+make lint
+
+# 查看所有可用命令
+make help
+```
+
+5. 或者直接使用 Go 命令
 ```bash
 go run main.go
 ```
