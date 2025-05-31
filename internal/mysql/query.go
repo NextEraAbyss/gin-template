@@ -3,12 +3,13 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
-	"gitee.com/NextEraAbyss/gin-template/internal/cache"
 	"gitee.com/NextEraAbyss/gin-template/utils"
+	redisClient "github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -34,7 +35,8 @@ type QueryBuilder struct {
 	db      *gorm.DB
 	query   *gorm.DB
 	context context.Context
-	cache   cache.Cache
+	// 直接使用Redis客户端
+	redisClient *redisClient.Client
 	// 慢查询阈值.
 	slowQueryThreshold time.Duration
 	// 是否启用缓存.
@@ -175,8 +177,8 @@ func (qb *QueryBuilder) Joins(query string, args ...interface{}) *QueryBuilder {
 }
 
 // WithCache 启用缓存.
-func (qb *QueryBuilder) WithCache(cacheInstance cache.Cache, expiration time.Duration) *QueryBuilder {
-	qb.cache = cacheInstance
+func (qb *QueryBuilder) WithCache(redisClient *redisClient.Client, expiration time.Duration) *QueryBuilder {
+	qb.redisClient = redisClient
 	qb.enableCache = true
 	qb.cacheExpiration = expiration
 
@@ -223,6 +225,43 @@ func (qb *QueryBuilder) getCacheKey(operation string, args ...interface{}) strin
 	return fmt.Sprintf("query:%s:%v", operation, args)
 }
 
+// setCache 设置缓存
+func (qb *QueryBuilder) setCache(key string, value interface{}) error {
+	if qb.redisClient == nil {
+		return nil
+	}
+
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	return qb.redisClient.Set(qb.context, key, data, qb.cacheExpiration).Err()
+}
+
+// getCache 获取缓存
+func (qb *QueryBuilder) getCache(key string, dest interface{}) error {
+	if qb.redisClient == nil {
+		return fmt.Errorf("cache not enabled")
+	}
+
+	data, err := qb.redisClient.Get(qb.context, key).Bytes()
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(data, dest)
+}
+
+// deleteCache 删除缓存
+func (qb *QueryBuilder) deleteCache(keys ...string) error {
+	if qb.redisClient == nil {
+		return nil
+	}
+
+	return qb.redisClient.Del(qb.context, keys...).Err()
+}
+
 // First 获取第一条记录.
 func (qb *QueryBuilder) First(dest interface{}) error {
 	start := time.Now()
@@ -239,9 +278,9 @@ func (qb *QueryBuilder) First(dest interface{}) error {
 	}
 
 	// 如果启用缓存，尝试从缓存获取.
-	if qb.enableCache && qb.cache != nil {
+	if qb.enableCache && qb.redisClient != nil {
 		cacheKey := qb.getCacheKey("First", qb.query.Statement.SQL.String())
-		if err := qb.cache.Get(qb.context, cacheKey, dest); err == nil {
+		if err := qb.getCache(cacheKey, dest); err == nil {
 			return nil
 		}
 		// 缓存未命中，继续执行数据库查询.
@@ -259,9 +298,9 @@ func (qb *QueryBuilder) First(dest interface{}) error {
 	}
 
 	// 如果启用缓存，将结果存入缓存.
-	if qb.enableCache && qb.cache != nil {
+	if qb.enableCache && qb.redisClient != nil {
 		cacheKey := qb.getCacheKey("First", qb.query.Statement.SQL.String())
-		if err := qb.cache.Set(qb.context, cacheKey, dest, qb.cacheExpiration); err != nil {
+		if err := qb.setCache(cacheKey, dest); err != nil {
 			// 记录缓存错误，但不中断流程.
 			log.Printf("Failed to set cache: %v", err)
 		}
@@ -317,9 +356,10 @@ func (qb *QueryBuilder) Updates(attrs interface{}) error {
 	}
 
 	// 如果启用缓存，清除相关缓存.
-	if qb.enableCache && qb.cache != nil {
-		// TODO: 实现缓存清理逻辑.
-		_ = qb.cache // 避免未使用变量警告
+	if qb.enableCache && qb.redisClient != nil {
+		// 实现缓存清理逻辑 - 删除相关的缓存键
+		pattern := qb.getCacheKey("*", "")
+		qb.clearCacheByPattern(pattern)
 	}
 
 	return nil
@@ -327,9 +367,10 @@ func (qb *QueryBuilder) Updates(attrs interface{}) error {
 
 // Delete 删除记录.
 func (qb *QueryBuilder) Delete(value interface{}) error {
-	if qb.enableCache && qb.cache != nil {
-		// TODO: 实现缓存删除逻辑.
-		_ = qb.cache // 避免未使用变量警告
+	if qb.enableCache && qb.redisClient != nil {
+		// 实现缓存删除逻辑 - 删除相关的缓存键
+		pattern := qb.getCacheKey("*", "")
+		qb.clearCacheByPattern(pattern)
 	}
 
 	return qb.db.Delete(value).Error
@@ -552,5 +593,25 @@ func (qb *QueryBuilder) logQueryStats(operation string, err error) {
 func (qb *QueryBuilder) logSlowQuery(operation string, duration time.Duration) {
 	if duration > qb.slowQueryThreshold {
 		utils.Warnf("慢查询警告 - 操作: %s, 耗时: %v", operation, duration)
+	}
+}
+
+// clearCacheByPattern 根据模式清除缓存
+func (qb *QueryBuilder) clearCacheByPattern(pattern string) {
+	if qb.redisClient == nil {
+		return
+	}
+
+	// 使用SCAN命令查找匹配的键
+	iter := qb.redisClient.Scan(qb.context, 0, pattern, 0).Iterator()
+	var keys []string
+	for iter.Next(qb.context) {
+		keys = append(keys, iter.Val())
+	}
+
+	if len(keys) > 0 {
+		if err := qb.redisClient.Del(qb.context, keys...).Err(); err != nil {
+			utils.Warnf("清除缓存失败: %v", err)
+		}
 	}
 }
