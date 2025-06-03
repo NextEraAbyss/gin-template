@@ -454,11 +454,12 @@ git push origin feature/your-feature
 
 ## 🔗 相关链接 | Links
 
-- 📚 **API文档** - [http://localhost:9999/swagger/index.html](http://localhost:9999/swagger/index.html)
-- 🐹 **Go官方文档** - [https://golang.org/doc/](https://golang.org/doc/)
-- 🌟 **Gin框架** - [https://gin-gonic.com/](https://gin-gonic.com/)
-- 🗄️ **GORM文档** - [https://gorm.io/](https://gorm.io/)
-- 🔴 **Redis文档** - [https://redis.io/documentation](https://redis.io/documentation)
+- 🌐 **个人网站**: [cv.wat.ink](https://cv.wat.ink)
+- 📝 **技术博客**: [blog.wat.ink](https://blog.wat.ink)
+- 🛠️ **管理后台**: [admin.wat.ink](https://admin.wat.ink)
+- 🔌 **API文档**: [api.wat.ink](https://api.wat.ink)
+- 👨‍💻 **GitHub**: [@NextEraAbyss](https://github.com/NextEraAbyss)
+- 🦄 **Gitee**: [@NextEraAbyss](https://gitee.com/NextEraAbyss)
 
 ---
 <div align="center">
@@ -466,8 +467,8 @@ git push origin feature/your-feature
 **🌟 如果这个项目对您有帮助，请给个 Star 支持一下！**
 
 <p>
-  <img src="https://img.shields.io/github/stars/NextEraAbyss/cv?style=social" alt="GitHub stars">
-  <img src="https://img.shields.io/github/forks/NextEraAbyss/cv?style=social" alt="GitHub forks">
+  <img src="https://img.shields.io/github/stars/NextEraAbyss/gin-template?style=social" alt="GitHub stars">
+  <img src="https://img.shields.io/github/forks/NextEraAbyss/gin-template?style=social" alt="GitHub forks">
 </p>
 
 *Built with ❤️ by [秦若宸](https://cv.wat.ink)*
